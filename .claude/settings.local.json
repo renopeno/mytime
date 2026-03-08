@@ -5,7 +5,13 @@
       "Bash(npm create vite@latest . -- --template react-ts --force)",
       "Bash(npm install)",
       "Bash(npm install tailwindcss @tailwindcss/vite)",
-      "Bash(npx shadcn@latest init -d -y)"
+      "Bash(npx shadcn@latest init -d -y)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(file /Users/renopeno/Desktop/MyTimeTracker/src/fonts/PPEditorialNew*.otf)",
+      "Bash(test -d /Users/renopeno/Desktop/MyTimeTracker/.claude/worktrees/friendly-nightingale/node_modules)",
+      "WebFetch(domain:atmos.style)",
+      "Bash(npm uninstall @fontsource-variable/geist)",
+      "Bash(npm install @fontsource-variable/inter)"
     ]
   }
 }
