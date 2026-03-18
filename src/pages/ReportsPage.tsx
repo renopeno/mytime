@@ -292,8 +292,8 @@ function KPICards({
 
 function LayeredRingChart({
   segments,
-  size = 260,
-  strokeWidth = 26,
+  size = 220,
+  strokeWidth = 30,
   centerLabel,
   centerValue,
 }: {
@@ -340,7 +340,7 @@ function LayeredRingChart({
           fill="none"
           stroke="currentColor"
           className="text-muted/40"
-          strokeWidth={strokeWidth}
+          strokeWidth={strokeWidth * 0.6}
         />
         {/* Segment arcs */}
         {arcs.map((arc) => (
@@ -405,9 +405,9 @@ function BillingDonutChart({
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card className="border-2 p-2">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Billing Status</CardTitle>
+        <CardTitle className="text-base font-medium">Billing Status</CardTitle>
       </CardHeader>
       <CardContent>
         {total === 0 ? (
@@ -500,9 +500,9 @@ function EarningsDonutChart({
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card className="border-2 p-2">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Earnings by Client</CardTitle>
+        <CardTitle className="text-base font-medium">Earnings by Client</CardTitle>
       </CardHeader>
       <CardContent>
         {segments.length === 0 ? (
@@ -602,9 +602,9 @@ function TrendChart({
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card className="border-2 p-2">
+    <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle className="text-lg font-semibold">Trend</CardTitle>
+        <CardTitle className="text-base font-medium">Trend</CardTitle>
         <SegmentControl
           options={[
             { value: 'hours' as TrendMetric, label: 'Hours' },
