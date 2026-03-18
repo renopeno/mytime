@@ -13,7 +13,7 @@ export interface DashboardFilters {
   to: Date
   projectIds?: string[]
   clientIds?: string[]
-  billingStatus?: 'all' | 'not_paid' | 'invoice_sent' | 'paid'
+  billingStatuses?: Array<'not_paid' | 'invoice_sent' | 'paid'>
 }
 
 export interface DashboardData {
@@ -98,18 +98,13 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
         entries = entries.filter((e) => e.project?.client?.id != null && ids.has(e.project!.client!.id))
       }
 
-      if (filters.billingStatus && filters.billingStatus !== 'all') {
-        switch (filters.billingStatus) {
-          case 'not_paid':
-            entries = entries.filter((e) => !e.is_paid && !e.is_invoiced)
-            break
-          case 'invoice_sent':
-            entries = entries.filter((e) => e.is_invoiced && !e.is_paid)
-            break
-          case 'paid':
-            entries = entries.filter((e) => e.is_paid)
-            break
-        }
+      if (filters.billingStatuses && filters.billingStatuses.length > 0) {
+        const statusSet = new Set(filters.billingStatuses)
+        entries = entries.filter((e) => {
+          if (e.is_paid) return statusSet.has('paid')
+          if (e.is_invoiced) return statusSet.has('invoice_sent')
+          return statusSet.has('not_paid')
+        })
       }
 
       // Aggregate
@@ -189,7 +184,7 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
     }
 
     fetchData()
-  }, [user, filters.from.getTime(), filters.to.getTime(), filters.projectIds?.join(','), filters.clientIds?.join(','), filters.billingStatus, settings])
+  }, [user, filters.from.getTime(), filters.to.getTime(), filters.projectIds?.join(','), filters.clientIds?.join(','), filters.billingStatuses?.join(','), settings])
 
   return data
 }

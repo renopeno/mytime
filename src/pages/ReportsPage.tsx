@@ -1,10 +1,19 @@
 import { useState, useMemo } from 'react'
-import { startOfMonth, endOfMonth } from 'date-fns'
+import { startOfMonth, endOfMonth, parseISO, format } from 'date-fns'
 import { toast } from 'sonner'
 import { FileText, ArrowLeftRight, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
@@ -43,7 +52,7 @@ function getColor(color: string | undefined, index: number): string {
   return color && color !== '' ? color : DEFAULT_COLORS[index % DEFAULT_COLORS.length]
 }
 
-type BillingStatus = 'all' | 'not_paid' | 'invoice_sent' | 'paid'
+type BillingStatusValue = 'not_paid' | 'invoice_sent' | 'paid'
 type BreakdownMode = 'project' | 'client'
 type TrendMetric = 'hours' | 'earnings'
 
@@ -612,7 +621,7 @@ export default function ReportsPage() {
   // Filters
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>([])
-  const [billingStatus, setBillingStatus] = useState<BillingStatus>('all')
+  const [selectedBillingStatuses, setSelectedBillingStatuses] = useState<BillingStatusValue[]>([])
 
   // Data hooks
   const { projects } = useProjects()
@@ -623,16 +632,16 @@ export default function ReportsPage() {
     to: dateRange.to,
     projectIds: selectedProjectIds.length > 0 ? selectedProjectIds : undefined,
     clientIds: selectedClientIds.length > 0 ? selectedClientIds : undefined,
-    billingStatus: billingStatus !== 'all' ? billingStatus : undefined,
-  }), [dateRange, selectedProjectIds, selectedClientIds, billingStatus])
+    billingStatuses: selectedBillingStatuses.length > 0 ? selectedBillingStatuses : undefined,
+  }), [dateRange, selectedProjectIds, selectedClientIds, selectedBillingStatuses])
 
   const compareFilters: DashboardFilters = useMemo(() => ({
     from: compareDateRange.from,
     to: compareDateRange.to,
     projectIds: selectedProjectIds.length > 0 ? selectedProjectIds : undefined,
     clientIds: selectedClientIds.length > 0 ? selectedClientIds : undefined,
-    billingStatus: billingStatus !== 'all' ? billingStatus : undefined,
-  }), [compareDateRange, selectedProjectIds, selectedClientIds, billingStatus])
+    billingStatuses: selectedBillingStatuses.length > 0 ? selectedBillingStatuses : undefined,
+  }), [compareDateRange, selectedProjectIds, selectedClientIds, selectedBillingStatuses])
 
   const data = useDashboardData(filters)
   const compareData = useDashboardData(compareFilters)
@@ -666,7 +675,7 @@ export default function ReportsPage() {
           filters={{
             projects: selectedProjectNames.length > 0 ? selectedProjectNames : undefined,
             clients: selectedClientNames.length > 0 ? selectedClientNames : undefined,
-            billingStatus: billingStatus !== 'all' ? billingStatus : undefined,
+            billingStatus: selectedBillingStatuses.length > 0 ? selectedBillingStatuses.join(', ') : undefined,
           }}
           summary={{
             totalMinutes: data.totalMinutes,
@@ -732,19 +741,20 @@ export default function ReportsPage() {
           selectedIds={selectedClientIds}
           onSelectionChange={setSelectedClientIds}
         />
-        <SegmentControl
-          options={[
-            { value: 'all' as BillingStatus, label: 'All' },
-            { value: 'not_paid' as BillingStatus, label: 'Not Paid' },
-            { value: 'invoice_sent' as BillingStatus, label: 'Invoice Sent' },
-            { value: 'paid' as BillingStatus, label: 'Paid' },
+        <MultiSelectFilter
+          label="statuses"
+          items={[
+            { id: 'not_paid', name: 'Not Paid', color: '#ef4444' },
+            { id: 'invoice_sent', name: 'Invoice Sent', color: '#f59e0b' },
+            { id: 'paid', name: 'Paid', color: '#10b981' },
           ]}
-          value={billingStatus}
-          onChange={setBillingStatus}
+          selectedIds={selectedBillingStatuses}
+          onSelectionChange={(ids) => setSelectedBillingStatuses(ids as BillingStatusValue[])}
         />
         <Button
           variant={compareMode ? 'default' : 'outline'}
           size="sm"
+          className="ml-auto"
           onClick={() => setCompareMode(!compareMode)}
         >
           <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" />
