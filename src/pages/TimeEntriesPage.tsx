@@ -166,112 +166,114 @@ export default function TimeEntriesPage() {
   return (
     <div>
 
-      {/* Sticky header zone — dark header + filters pinned at top */}
-      <div className="sticky top-0 z-20">
-        {/* Dark header */}
-        <div className="bg-muted">
-          <div className="px-5 md:px-6 pt-6">
-            <QuickEntryForm
-              onSubmit={createEntry}
-              date={quickDate}
-              onDateChange={setQuickDate}
-            />
+      {/* Sticky zone — only quick entry form */}
+      <div className="sticky top-0 z-20 bg-muted">
+        <div className="px-5 md:px-6 pt-6 pb-5">
+          <QuickEntryForm
+            onSubmit={createEntry}
+            date={quickDate}
+            onDateChange={setQuickDate}
+          />
+        </div>
+      </div>
 
-            {/* Weekly progress bar — project-colored, full width */}
-            <div className="mt-5 h-[3px] overflow-hidden rounded-full bg-sidebar-accent">
-              {projectBreakdown.length > 0 ? (
-                <div className="flex h-full">
-                  <TooltipProvider>
-                    {projectBreakdown.map((p) => {
-                      const pct = Math.round((p.minutes / WEEKLY_TARGET) * 100)
-                      return (
-                        <Tooltip key={p.name}>
-                          <TooltipTrigger
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(pct, 100)}%`,
-                              backgroundColor: p.color,
-                            }}
-                          />
-                          <TooltipContent>
-                            {p.name} — {formatDuration(p.minutes)} / {pct}%
-                          </TooltipContent>
-                        </Tooltip>
-                      )
-                    })}
-                  </TooltipProvider>
-                </div>
-              ) : (
-                <div
-                  className="h-full rounded-full bg-foreground/30 transition-all"
-                  style={{ width: `${Math.min(weekMinutes / WEEKLY_TARGET, 1) * 100}%` }}
+      {/* Scrollable: progress bar + KPIs + rounded cap */}
+      <div className="bg-muted">
+        <div className="px-5 md:px-6">
+          {/* Weekly progress bar — project-colored, full width */}
+          <div className="h-[3px] overflow-hidden rounded-full bg-sidebar-accent">
+            {projectBreakdown.length > 0 ? (
+              <div className="flex h-full">
+                <TooltipProvider>
+                  {projectBreakdown.map((p) => {
+                    const pct = Math.round((p.minutes / WEEKLY_TARGET) * 100)
+                    return (
+                      <Tooltip key={p.name}>
+                        <TooltipTrigger
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(pct, 100)}%`,
+                            backgroundColor: p.color,
+                          }}
+                        />
+                        <TooltipContent>
+                          {p.name} — {formatDuration(p.minutes)} / {pct}%
+                        </TooltipContent>
+                      </Tooltip>
+                    )
+                  })}
+                </TooltipProvider>
+              </div>
+            ) : (
+              <div
+                className="h-full rounded-full bg-foreground/30 transition-all"
+                style={{ width: `${Math.min(weekMinutes / WEEKLY_TARGET, 1) * 100}%` }}
+              />
+            )}
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Time this week */}
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground">Time this week</p>
+              <div className="flex items-baseline gap-2">
+                <p className="font-serif text-xl font-semibold">{formatDuration(weekMinutes)}</p>
+                <ComparisonBadge
+                  current={weekMinutes}
+                  previous={lastWeekMinutes}
+                  formatter={(v) => formatDuration(v)}
                 />
-              )}
+              </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {/* Time this week */}
-              <div className="flex flex-col gap-1">
-                <p className="text-xs text-muted-foreground">Time this week</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="font-serif text-xl font-semibold">{formatDuration(weekMinutes)}</p>
-                  <ComparisonBadge
-                    current={weekMinutes}
-                    previous={lastWeekMinutes}
-                    formatter={(v) => formatDuration(v)}
-                  />
-                </div>
+            {/* Earned this week */}
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground">Earned this week</p>
+              <div className="flex items-baseline gap-2">
+                <p className="font-serif text-xl font-semibold">{formatCurrency(weekEarned)}</p>
+                <ComparisonBadge
+                  current={weekEarned}
+                  previous={lastWeekEarned}
+                  formatter={(v) => formatCurrency(v)}
+                />
               </div>
+            </div>
 
-              {/* Earned this week */}
-              <div className="flex flex-col gap-1">
-                <p className="text-xs text-muted-foreground">Earned this week</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="font-serif text-xl font-semibold">{formatCurrency(weekEarned)}</p>
-                  <ComparisonBadge
-                    current={weekEarned}
-                    previous={lastWeekEarned}
-                    formatter={(v) => formatCurrency(v)}
-                  />
-                </div>
-              </div>
-
-              {/* Earned this month */}
-              <div className="flex flex-col gap-1">
-                <p className="text-xs text-muted-foreground">Earned this month</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="font-serif text-xl font-semibold">{formatCurrency(monthlyEarned)}</p>
-                  <ComparisonBadge
-                    current={monthlyEarned}
-                    previous={lastMonthEarned}
-                    formatter={(v) => formatCurrency(v)}
-                    label="vs last month"
-                  />
-                </div>
+            {/* Earned this month */}
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground">Earned this month</p>
+              <div className="flex items-baseline gap-2">
+                <p className="font-serif text-xl font-semibold">{formatCurrency(monthlyEarned)}</p>
+                <ComparisonBadge
+                  current={monthlyEarned}
+                  previous={lastMonthEarned}
+                  formatter={(v) => formatCurrency(v)}
+                  label="vs last month"
+                />
               </div>
             </div>
           </div>
-
-          {/* Rounded white cap — sits outside padded area for full width without overflow-hidden */}
-          <div className="mt-5 h-[32px] bg-background rounded-t-[16px] shadow-xs" />
         </div>
 
-        {/* Sticky filters — white background, below header */}
-        <div className="bg-background px-5 md:px-6 pb-2">
-          <TimeEntryFilters
-            startDate={startDate}
-            endDate={endDate}
-            projectId={projectId}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-            onProjectChange={setProjectId}
-            onClear={() => {
-              setStartDate(undefined)
-              setEndDate(undefined)
-              setProjectId('')
-            }}
-          />
-        </div>
+        {/* Rounded white cap — sits outside padded area for full width without overflow-hidden */}
+        <div className="mt-5 h-[32px] bg-background rounded-t-[16px] shadow-xs" />
+      </div>
+
+      {/* Filters — scrollable */}
+      <div className="bg-background px-5 md:px-6 pb-2">
+        <TimeEntryFilters
+          startDate={startDate}
+          endDate={endDate}
+          projectId={projectId}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onProjectChange={setProjectId}
+          onClear={() => {
+            setStartDate(undefined)
+            setEndDate(undefined)
+            setProjectId('')
+          }}
+        />
       </div>
 
       {/* Scrollable content */}
