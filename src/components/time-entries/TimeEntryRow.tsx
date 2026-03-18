@@ -39,11 +39,12 @@ interface TimeEntryRowProps {
     is_paid?: boolean
     is_invoiced?: boolean
   }) => Promise<{ error?: unknown }>
+  isMobile?: boolean
 }
 
 type EditingField = 'description' | 'project' | 'duration' | null
 
-export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate }: TimeEntryRowProps) {
+export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate, isMobile }: TimeEntryRowProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
   const [editingField, setEditingField] = useState<EditingField>(null)
@@ -94,6 +95,79 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate 
   async function setStatus(invoiced: boolean, paid: boolean) {
     setStatusOpen(false)
     await onUpdate(entry.id, { is_invoiced: invoiced, is_paid: paid })
+  }
+
+  if (isMobile) {
+    const rate = resolveHourlyRate(entry.project, entry.project?.client, settings)
+    const amount = rate * (entry.duration_minutes / 60)
+    return (
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        {/* Top row: project + color dot at left, duration at right */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            {entry.project ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium">
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.project.color }}
+                />
+                <span className="truncate">{entry.project.name}</span>
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">No project</span>
+            )}
+          </div>
+          <span className="shrink-0 text-sm font-semibold">
+            {formatDuration(entry.duration_minutes)}
+          </span>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-muted-foreground truncate">
+          {entry.description || <span className="italic">No description</span>}
+        </p>
+
+        {/* Status + amount */}
+        <div className="flex items-center gap-2">
+          {entry.is_paid ? (
+            <Badge className="bg-status-paid text-xs text-white/90">Paid</Badge>
+          ) : entry.is_invoiced ? (
+            <Badge className="bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
+          ) : (
+            <Badge className="bg-status-not-paid text-xs text-black/60">Not paid</Badge>
+          )}
+          <span className="text-xs text-muted-foreground/60">
+            {formatCurrency(amount)}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 border-t pt-3">
+          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onDuplicate(entry)}>
+            <Copy className="mr-1 h-3.5 w-3.5" />
+            Duplicate
+          </Button>
+          <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-destructive" />}>
+              <Trash2 className="mr-1 h-3.5 w-3.5" />
+              Delete
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete time entry?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this time entry. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onDelete(entry.id)}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -153,17 +227,13 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate 
         ) : (
           <div className="cursor-pointer" onClick={() => startEdit('project')}>
             {entry.project ? (
-              <Badge
-                variant="secondary"
-                style={{
-                  backgroundColor: entry.project.color + '20',
-                  color: entry.project.color,
-                  borderColor: entry.project.color + '40',
-                }}
-                className="max-w-full truncate border text-xs"
-              >
-                {entry.project.name}
-              </Badge>
+              <span className="flex items-center gap-1.5 text-sm">
+                <span
+                  className="inline-block h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.project.color }}
+                />
+                <span className="truncate">{entry.project.name}</span>
+              </span>
             ) : (
               <span className="text-sm text-muted-foreground">—</span>
             )}
@@ -176,11 +246,11 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate 
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger render={<div className="cursor-pointer" />}>
             {entry.is_paid ? (
-              <Badge className="cursor-pointer bg-green-600 text-xs hover:bg-green-700">Paid</Badge>
+              <Badge className="cursor-pointer bg-status-paid text-xs text-white/90">Paid</Badge>
             ) : entry.is_invoiced ? (
-              <Badge className="cursor-pointer border border-amber-300 bg-amber-100 text-xs text-amber-700 hover:bg-amber-200">Invoice sent</Badge>
+              <Badge className="cursor-pointer bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
             ) : (
-              <Badge variant="secondary" className="cursor-pointer text-xs">Not paid</Badge>
+              <Badge className="cursor-pointer bg-status-not-paid text-xs text-black/60">Not paid</Badge>
             )}
           </PopoverTrigger>
           <PopoverContent className="w-36 gap-0 p-1" align="start">
@@ -189,7 +259,7 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate 
               onClick={() => setStatus(false, false)}
               className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
             >
-              <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+              <span className="h-2 w-2 rounded-full bg-status-not-paid" />
               Not paid
             </button>
             <button
@@ -197,15 +267,15 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate 
               onClick={() => setStatus(true, false)}
               className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
             >
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              Invoice sent
+              <span className="h-2 w-2 rounded-full bg-status-invoiced" />
+              Invoiced
             </button>
             <button
               type="button"
               onClick={() => setStatus(true, true)}
               className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
             >
-              <span className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="h-2 w-2 rounded-full bg-status-paid" />
               Paid
             </button>
           </PopoverContent>

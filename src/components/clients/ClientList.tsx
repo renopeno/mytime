@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Pencil, Trash2, UserMinus, UserPlus } from 'lucide-react'
 import type { Client } from '@/types/app.types'
 import { formatCurrency } from '@/lib/format'
@@ -21,9 +21,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { BulkActionBar } from '@/components/ui/bulk-action-bar'
+import { useShiftSelect } from '@/hooks/useShiftSelect'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ClientListProps {
   clients: Client[]
@@ -44,6 +48,7 @@ export function ClientList({
   onBulkDelete,
   onBulkToggleActive,
 }: ClientListProps) {
+  const isMobile = useIsMobile()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -63,14 +68,8 @@ export function ClientList({
     }
   }
 
-  function toggleOne(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const clientItems = useMemo(() => clients.map((c) => ({ id: c.id })), [clients])
+  const { getClickHandler } = useShiftSelect(clientItems, selected, setSelected)
 
   const selectedClients = clients.filter((c) => selected.has(c.id))
 
@@ -86,54 +85,118 @@ export function ClientList({
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-0 z-50 translate-y-full transition-transform duration-300 ease-out data-[open=true]:translate-y-0" data-open={selected.size > 0}>
-        <div className="flex items-center gap-3 bg-black px-6 py-4 text-white shadow-2xl">
-          <span className="text-sm font-medium">{selected.size} selected</span>
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              onClick={() => {
-                onBulkToggleActive(selectedClients)
-                setSelected(new Set())
-              }}
-            >
-              {selectedClients[0]?.is_active ? (
-                <><UserMinus className="mr-1.5 h-3.5 w-3.5" />Deactivate</>
-              ) : (
-                <><UserPlus className="mr-1.5 h-3.5 w-3.5" />Reactivate</>
-              )}
-            </Button>
-            <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
-              <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                  Delete
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete {selected.size} client{selected.size !== 1 ? 's' : ''}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete the selected clients? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      onBulkDelete(Array.from(selected))
-                      setSelected(new Set())
-                    }}
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-      </div>
+      <BulkActionBar count={selected.size} open={selected.size > 0}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          onClick={() => {
+            onBulkToggleActive(selectedClients)
+            setSelected(new Set())
+          }}
+        >
+          {selectedClients[0]?.is_active ? (
+            <><UserMinus className="mr-1.5 h-3.5 w-3.5" />Deactivate</>
+          ) : (
+            <><UserPlus className="mr-1.5 h-3.5 w-3.5" />Reactivate</>
+          )}
+        </Button>
+        <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+          <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" />}>
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Delete
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selected.size} client{selected.size !== 1 ? 's' : ''}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the selected clients? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  onBulkDelete(Array.from(selected))
+                  setSelected(new Set())
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </BulkActionBar>
 
+    {isMobile ? (
+      <div className="space-y-3">
+        {clients.map((client) => (
+          <div key={client.id} className="rounded-lg border bg-card p-4 space-y-3">
+            {/* Top row: name at left, rate at right */}
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-sm font-medium truncate">{client.name}</span>
+              <span className="shrink-0 text-sm font-semibold">
+                {client.hourly_rate != null ? (
+                  `${formatCurrency(client.hourly_rate)}/hr`
+                ) : (
+                  <span className="text-muted-foreground">Default</span>
+                )}
+              </span>
+            </div>
+
+            {/* Status badge */}
+            <div>
+              <Badge variant={client.is_active ? 'default' : 'secondary'} className="text-xs">
+                {client.is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 border-t pt-3">
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onToggleActive(client)}>
+                {client.is_active ? (
+                  <><UserMinus className="mr-1 h-3.5 w-3.5" />Deactivate</>
+                ) : (
+                  <><UserPlus className="mr-1 h-3.5 w-3.5" />Reactivate</>
+                )}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onEdit(client)}>
+                <Pencil className="mr-1 h-3.5 w-3.5" />
+                Edit
+              </Button>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-destructive" onClick={() => setDeleteId(client.id)}>
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        ))}
+
+        <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Client</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this client? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (deleteId) {
+                    onDelete(deleteId)
+                    setDeleteId(null)
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    ) : (
     <div className="rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>
@@ -147,7 +210,6 @@ export function ClientList({
               />
             </TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
             <TableHead>Rate</TableHead>
             <TableHead className="w-28 text-right">Actions</TableHead>
           </TableRow>
@@ -158,20 +220,13 @@ export function ClientList({
               <TableCell>
                 <Checkbox
                   checked={selected.has(client.id)}
-                  onCheckedChange={() => toggleOne(client.id)}
+                  onClick={getClickHandler(client.id)}
                   aria-label={`Select ${client.name}`}
                 />
               </TableCell>
               <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: client.color ?? '#3b82f6' }}
-                  />
-                  {client.name}
-                </div>
+                {client.name}
               </TableCell>
-              <TableCell>{client.email ?? ''}</TableCell>
               <TableCell>
                 {client.hourly_rate != null ? (
                   formatCurrency(client.hourly_rate)
@@ -228,6 +283,7 @@ export function ClientList({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    )}
     </>
   )
 }

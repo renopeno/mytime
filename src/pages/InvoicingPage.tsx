@@ -11,10 +11,12 @@ import { CalendarIcon, Check, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTimeEntries } from '@/hooks/useTimeEntries'
 import { useSettings } from '@/hooks/useSettings'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { formatDuration } from '@/lib/duration'
 import { formatDate, formatCurrency } from '@/lib/format'
 import { ProjectSelect } from '@/components/projects/ProjectSelect'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -66,6 +68,7 @@ const DATE_PRESETS: { value: DatePreset; label: string }[] = [
 ]
 
 export default function InvoicingPage() {
+  const isMobile = useIsMobile()
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [datePreset, setDatePreset] = useState<DatePreset>('all_time')
@@ -252,7 +255,7 @@ export default function InvoicingPage() {
       </Tabs>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total entries</p>
@@ -377,7 +380,7 @@ export default function InvoicingPage() {
         )}
       </BulkActionBar>
 
-      {/* Table */}
+      {/* Table / Cards */}
       {loading ? (
         <div className="space-y-3">
           <Skeleton className="h-10 w-full" />
@@ -391,6 +394,70 @@ export default function InvoicingPage() {
           <p className="text-sm text-muted-foreground">
             Try adjusting your filters or date range
           </p>
+        </div>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {entries.map((entry) => {
+            const rate = getEffectiveRate(entry)
+            const amount = getAmount(entry)
+            const isSelected = selectedIds.has(entry.id)
+
+            return (
+              <div
+                key={entry.id}
+                className={cn(
+                  'rounded-lg border bg-card p-4 space-y-3',
+                  isSelected && 'ring-2 ring-primary/50'
+                )}
+              >
+                {/* Top row: checkbox + date/project at left, amount at right */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={isSelected}
+                      onClick={getClickHandler(entry.id)}
+                      aria-label={`Select entry ${entry.description}`}
+                      className="mt-0.5"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">{formatDate(entry.date)}</p>
+                      {entry.project ? (
+                        <span className="flex items-center gap-1.5 text-sm font-medium">
+                          <span
+                            className="inline-block h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: entry.project.color }}
+                          />
+                          <span className="truncate">{entry.project.name}</span>
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No project</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold">
+                    {rate > 0 ? formatCurrency(amount) : <span className="text-muted-foreground">--</span>}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-sm text-muted-foreground truncate pl-8">
+                  {entry.description || <span className="italic">No description</span>}
+                </p>
+
+                {/* Bottom row: duration + status badges */}
+                <div className="flex items-center gap-2 pl-8">
+                  <span className="text-xs text-muted-foreground">
+                    {formatDuration(entry.duration_minutes)}
+                  </span>
+                  {entry.is_paid ? (
+                    <Badge className="bg-status-paid text-xs text-white/90">Paid</Badge>
+                  ) : entry.is_invoiced ? (
+                    <Badge className="bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
+                  ) : null}
+                </div>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">
