@@ -21,6 +21,8 @@ import {
   Bar,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -194,13 +196,17 @@ function KPICards({
   compareLoading: boolean
   compareMode: boolean
 }) {
-  const { totalMinutes, totalAmount, workingDays, billingBreakdown } = data
+  const { totalMinutes, totalAmount, workingDays } = data
 
   const minutesDelta = compareMode && compareData ? computeDelta(totalMinutes, compareData.totalMinutes) : null
   const amountDelta = compareMode && compareData ? computeDelta(totalAmount, compareData.totalAmount) : null
   const daysDelta = compareMode && compareData ? computeDelta(workingDays, compareData.workingDays) : null
 
-  const billingTotal = billingBreakdown.notPaid + billingBreakdown.invoiceSent + billingBreakdown.paid
+  const avgHourlyRate = totalMinutes > 0 ? totalAmount / (totalMinutes / 60) : 0
+  const compareAvgHourlyRate = compareMode && compareData && compareData.totalMinutes > 0
+    ? compareData.totalAmount / (compareData.totalMinutes / 60)
+    : 0
+  const rateDelta = compareMode && compareData ? computeDelta(avgHourlyRate, compareAvgHourlyRate) : null
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -260,49 +266,17 @@ function KPICards({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Billing Breakdown</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Avg Hourly Rate</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <Skeleton className="h-8 w-full" />
-          ) : billingTotal === 0 ? (
-            <p className="text-sm text-muted-foreground">No data</p>
+            <Skeleton className="h-8 w-24" />
           ) : (
-            <div className="space-y-2">
-              <div className="flex h-3 w-full overflow-hidden rounded-full">
-                {billingBreakdown.paid > 0 && (
-                  <div
-                    className="bg-emerald-500"
-                    style={{ width: `${(billingBreakdown.paid / billingTotal) * 100}%` }}
-                  />
-                )}
-                {billingBreakdown.invoiceSent > 0 && (
-                  <div
-                    className="bg-amber-400"
-                    style={{ width: `${(billingBreakdown.invoiceSent / billingTotal) * 100}%` }}
-                  />
-                )}
-                {billingBreakdown.notPaid > 0 && (
-                  <div
-                    className="bg-zinc-300 dark:bg-zinc-600"
-                    style={{ width: `${(billingBreakdown.notPaid / billingTotal) * 100}%` }}
-                  />
-                )}
-              </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                  Paid {formatCurrency(billingBreakdown.paid)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
-                  Invoiced {formatCurrency(billingBreakdown.invoiceSent)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                  Not paid {formatCurrency(billingBreakdown.notPaid)}
-                </span>
-              </div>
+            <div className="flex items-baseline gap-2">
+              <p className="font-serif text-2xl font-bold">{formatCurrency(avgHourlyRate)}</p>
+              {compareMode && !compareLoading && rateDelta && (
+                <span className={`text-sm font-medium ${deltaColorClass(rateDelta)}`}>{rateDelta}</span>
+              )}
             </div>
           )}
         </CardContent>
@@ -514,6 +488,103 @@ function TrendChart({
   )
 }
 
+// ─── Billing Donut Chart ─────────────────────────────────────────────────────
+
+const BILLING_COLORS = {
+  notPaid: '#ef4444',
+  invoiceSent: '#f59e0b',
+  paid: '#10b981',
+}
+
+function BillingDonutChart({
+  data,
+  loading,
+}: {
+  data: DashboardData
+  loading: boolean
+}) {
+  const { billingBreakdown } = data
+  const total = billingBreakdown.notPaid + billingBreakdown.invoiceSent + billingBreakdown.paid
+
+  const chartData = useMemo(() => {
+    const segments: Array<{ name: string; value: number; color: string }> = []
+    if (billingBreakdown.notPaid > 0) {
+      segments.push({ name: 'Not Paid', value: Math.round(billingBreakdown.notPaid * 100) / 100, color: BILLING_COLORS.notPaid })
+    }
+    if (billingBreakdown.invoiceSent > 0) {
+      segments.push({ name: 'Invoice Sent', value: Math.round(billingBreakdown.invoiceSent * 100) / 100, color: BILLING_COLORS.invoiceSent })
+    }
+    if (billingBreakdown.paid > 0) {
+      segments.push({ name: 'Paid', value: Math.round(billingBreakdown.paid * 100) / 100, color: BILLING_COLORS.paid })
+    }
+    return segments
+  }, [billingBreakdown])
+
+  if (loading) return <Skeleton className="h-[350px] w-full" />
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Billing Status</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <NoData />
+        ) : (
+          <div className="flex items-center gap-8">
+            <div className="relative h-[220px] w-[220px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={68}
+                    outerRadius={100}
+                    paddingAngle={4}
+                    dataKey="value"
+                    strokeLinecap="round"
+                    stroke="none"
+                  >
+                    {chartData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Center text */}
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="font-serif text-lg font-bold">{formatCurrency(total)}</span>
+              </div>
+            </div>
+            {/* Legend */}
+            <div className="flex flex-col gap-3">
+              {[
+                { label: 'Not Paid', amount: billingBreakdown.notPaid, color: BILLING_COLORS.notPaid },
+                { label: 'Invoice Sent', amount: billingBreakdown.invoiceSent, color: BILLING_COLORS.invoiceSent },
+                { label: 'Paid', amount: billingBreakdown.paid, color: BILLING_COLORS.paid },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2.5">
+                  <span
+                    className="inline-block h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
+                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
 function NoData() {
@@ -706,6 +777,7 @@ export default function ReportsPage() {
           loading={data.isLoading}
           compareMode={compareMode}
         />
+        <BillingDonutChart data={data} loading={data.isLoading} />
       </div>
     </div>
   )
