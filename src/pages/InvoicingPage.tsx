@@ -39,23 +39,23 @@ import {
 } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BulkActionBar } from '@/components/ui/bulk-action-bar'
+import { useShiftSelect } from '@/hooks/useShiftSelect'
 import type { TimeEntryWithProject } from '@/types/app.types'
 
 type PaidFilter = 'unpaid' | 'paid' | 'all'
 type InvoicedFilter = 'all' | 'invoiced' | 'not_invoiced'
-
-
 
 const INVOICED_LABELS: Record<InvoicedFilter, string> = {
   all: 'Invoiced status',
   invoiced: 'Invoiced',
   not_invoiced: 'Not invoiced',
 }
-type DatePreset = 'this_week' | 'this_month' | 'last_week' | 'last_month' | 'this_year' | 'last_year' | 'custom' | ''
+type DatePreset = 'all_time' | 'this_week' | 'this_month' | 'last_week' | 'last_month' | 'this_year' | 'last_year' | 'custom'
 
 const DATE_PRESETS: { value: DatePreset; label: string }[] = [
+  { value: 'all_time',    label: 'All time' },
   { value: 'this_week',   label: 'This week' },
   { value: 'this_month',  label: 'This month' },
   { value: 'last_week',   label: 'Last week' },
@@ -68,7 +68,7 @@ const DATE_PRESETS: { value: DatePreset; label: string }[] = [
 export default function InvoicingPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [datePreset, setDatePreset] = useState<DatePreset>('')
+  const [datePreset, setDatePreset] = useState<DatePreset>('all_time')
   const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
   const [datePickerOpen, setDatePickerOpen] = useState(false)
   const [projectId, setProjectId] = useState('')
@@ -83,6 +83,12 @@ export default function InvoicingPage() {
     setDatePreset(preset)
     if (preset === 'custom') return
     setCustomRange(undefined)
+    if (preset === 'all_time') {
+      setStartDate(undefined)
+      setEndDate(undefined)
+      setDatePickerOpen(false)
+      return
+    }
     switch (preset) {
       case 'this_week':
         setStartDate(startOfWeek(now, { weekStartsOn: 1 }))
@@ -133,13 +139,12 @@ export default function InvoicingPage() {
     }
   }
 
-  function getDateLabel(): string | null {
-    if (!datePreset) return null
-    const preset = DATE_PRESETS.find((p) => p.value === datePreset)
+  function getDateLabel(): string {
     if (datePreset === 'custom' && startDate && endDate) {
       return `${format(startDate, 'dd.MM.yy')} – ${format(endDate, 'dd.MM.yy')}`
     }
-    return preset?.label ?? null
+    const preset = DATE_PRESETS.find((p) => p.value === datePreset)
+    return preset?.label ?? 'All time'
   }
 
   const fetchOptions = useMemo(() => {
@@ -158,8 +163,10 @@ export default function InvoicingPage() {
     if (paidFilter === 'unpaid') opts.isPaid = false
     else if (paidFilter === 'paid') opts.isPaid = true
 
-    if (invoicedFilter === 'invoiced') opts.isInvoiced = true
-    else if (invoicedFilter === 'not_invoiced') opts.isInvoiced = false
+    if (paidFilter !== 'paid') {
+      if (invoicedFilter === 'invoiced') opts.isInvoiced = true
+      else if (invoicedFilter === 'not_invoiced') opts.isInvoiced = false
+    }
 
     return opts
   }, [startDate, endDate, projectId, paidFilter, invoicedFilter])
@@ -197,17 +204,8 @@ export default function InvoicingPage() {
     }
   }
 
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
+  const entryItems = useMemo(() => entries.map((e) => ({ id: e.id })), [entries])
+  const { getClickHandler } = useShiftSelect(entryItems, selectedIds, setSelectedIds)
 
   async function handleMarkPaid() {
     const ids = Array.from(selectedIds)
@@ -236,18 +234,18 @@ export default function InvoicingPage() {
   }
 
   return (
-    <div className="space-y-6 px-8 py-8">
+    <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div>
-        <h1 className="font-serif text-2xl font-medium tracking-tight">Invoicing</h1>
+        <h1 className="font-serif text-3xl font-medium tracking-tight">Invoicing</h1>
         <p className="text-sm text-muted-foreground">
           Review time entries and manage payment status
         </p>
       </div>
 
       {/* Paid tabs */}
-      <Tabs value={paidFilter} onValueChange={(v) => { setPaidFilter(v as PaidFilter); setSelectedIds(new Set()) }}>
+      <Tabs value={paidFilter} onValueChange={(v) => { setPaidFilter(v as PaidFilter); setInvoicedFilter('all'); setSelectedIds(new Set()) }}>
         <TabsList>
-          <TabsTrigger value="unpaid">Unpaid</TabsTrigger>
+          <TabsTrigger value="unpaid">Not paid</TabsTrigger>
           <TabsTrigger value="paid">Paid</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
@@ -255,20 +253,20 @@ export default function InvoicingPage() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="py-2">
-          <CardContent className="h-10 px-4 flex flex-col justify-center">
+        <Card className="py-3">
+          <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total entries</p>
             <p className="font-serif text-xl font-bold">{loading ? '—' : entries.length}</p>
           </CardContent>
         </Card>
-        <Card className="py-2">
-          <CardContent className="h-10 px-4 flex flex-col justify-center">
+        <Card className="py-3">
+          <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total hours</p>
             <p className="font-serif text-xl font-bold">{loading ? '—' : formatDuration(totals.totalMinutes)}</p>
           </CardContent>
         </Card>
-        <Card className="py-2">
-          <CardContent className="h-10 px-4 flex flex-col justify-center">
+        <Card className="py-3">
+          <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total amount</p>
             <p className="font-serif text-xl font-bold">{loading ? '—' : formatCurrency(totals.totalAmount)}</p>
           </CardContent>
@@ -284,14 +282,13 @@ export default function InvoicingPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  'justify-start text-left font-normal',
-                  !datePreset && 'text-muted-foreground'
+                  'justify-start text-left font-normal'
                 )}
               />
             }
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-            {getDateLabel() ?? 'Choose date'}
+            {getDateLabel()}
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             {datePreset !== 'custom' ? (
@@ -313,7 +310,7 @@ export default function InvoicingPage() {
             ) : (
               <div className="flex flex-col">
                 <button
-                  onClick={() => setDatePreset('')}
+                  onClick={() => setDatePreset('all_time')}
                   className="flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronRight className="h-3 w-3 rotate-180" />
@@ -355,22 +352,30 @@ export default function InvoicingPage() {
         )}
       </div>
 
-      {/* Bulk action bar */}
-      {someSelected && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3">
-          <span className="text-sm font-medium">
-            {selectedIds.size} {selectedIds.size === 1 ? 'entry' : 'entries'} selected
-          </span>
-          <Button size="sm" onClick={handleMarkPaid}>
-            <Check className="mr-2 h-4 w-4" />
-            Mark as Paid
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleMarkInvoiced}>
-            <Check className="mr-2 h-4 w-4" />
-            Mark as Invoiced
-          </Button>
-        </div>
-      )}
+      <BulkActionBar count={selectedIds.size} open={someSelected}>
+        {paidFilter !== 'paid' && (
+          <>
+            <Button
+              size="sm"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              variant="outline"
+              onClick={handleMarkInvoiced}
+            >
+              <Check className="mr-1.5 h-3.5 w-3.5" />
+              Mark as Invoiced
+            </Button>
+            <Button
+              size="sm"
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              variant="outline"
+              onClick={handleMarkPaid}
+            >
+              <Check className="mr-1.5 h-3.5 w-3.5" />
+              Mark as Paid
+            </Button>
+          </>
+        )}
+      </BulkActionBar>
 
       {/* Table */}
       {loading ? (
@@ -389,7 +394,7 @@ export default function InvoicingPage() {
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">
-          <Table>
+          <Table className="[&_td]:py-3">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px]">
@@ -405,7 +410,6 @@ export default function InvoicingPage() {
                 <TableHead className="text-right">Duration</TableHead>
                 <TableHead className="text-right">Rate</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-center">Paid</TableHead>
                 <TableHead className="text-center">Invoiced</TableHead>
               </TableRow>
             </TableHeader>
@@ -423,7 +427,7 @@ export default function InvoicingPage() {
                     <TableCell>
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() => toggleSelect(entry.id)}
+                        onClick={getClickHandler(entry.id)}
                         aria-label={`Select entry ${entry.description}`}
                       />
                     </TableCell>
@@ -434,7 +438,7 @@ export default function InvoicingPage() {
                       {entry.project ? (
                         <span className="flex items-center gap-2">
                           <span
-                            className="inline-block h-2.5 w-2.5 rounded-full"
+                            className="inline-block h-2 w-2 rounded-full"
                             style={{ backgroundColor: entry.project.color }}
                           />
                           {entry.project.name}
@@ -470,25 +474,8 @@ export default function InvoicingPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {entry.is_paid ? (
-                        <Badge variant="default" className="text-xs">
-                          Paid
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">
-                          Unpaid
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {entry.is_invoiced ? (
-                        <Badge variant="default" className="text-xs">
-                          Invoiced
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">
-                          Not invoiced
-                        </Badge>
+                      {(entry.is_invoiced || entry.is_paid) && (
+                        <Check className="mx-auto h-4 w-4 text-emerald-600" />
                       )}
                     </TableCell>
                   </TableRow>

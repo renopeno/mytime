@@ -170,7 +170,7 @@ export default function TimeEntriesPage() {
       <div className="sticky top-0 z-20">
         {/* Dark header */}
         <div className="bg-muted">
-          <div className="px-6 pt-6">
+          <div className="px-5 md:px-6 pt-6">
             <QuickEntryForm
               onSubmit={createEntry}
               date={quickDate}
@@ -211,7 +211,7 @@ export default function TimeEntriesPage() {
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
               {/* Time this week */}
-              <div>
+              <div className="flex flex-col gap-1">
                 <p className="text-xs text-muted-foreground">Time this week</p>
                 <div className="flex items-baseline gap-2">
                   <p className="font-serif text-xl font-semibold">{formatDuration(weekMinutes)}</p>
@@ -224,7 +224,7 @@ export default function TimeEntriesPage() {
               </div>
 
               {/* Earned this week */}
-              <div>
+              <div className="flex flex-col gap-1">
                 <p className="text-xs text-muted-foreground">Earned this week</p>
                 <div className="flex items-baseline gap-2">
                   <p className="font-serif text-xl font-semibold">{formatCurrency(weekEarned)}</p>
@@ -237,7 +237,7 @@ export default function TimeEntriesPage() {
               </div>
 
               {/* Earned this month */}
-              <div>
+              <div className="flex flex-col gap-1">
                 <p className="text-xs text-muted-foreground">Earned this month</p>
                 <div className="flex items-baseline gap-2">
                   <p className="font-serif text-xl font-semibold">{formatCurrency(monthlyEarned)}</p>
@@ -257,7 +257,7 @@ export default function TimeEntriesPage() {
         </div>
 
         {/* Sticky filters — white background, below header */}
-        <div className="bg-background px-6 pb-2">
+        <div className="bg-background px-5 md:px-6 pb-2">
           <TimeEntryFilters
             startDate={startDate}
             endDate={endDate}
@@ -275,7 +275,7 @@ export default function TimeEntriesPage() {
       </div>
 
       {/* Scrollable content */}
-      <div className="px-6 pb-5">
+      <div className="px-5 md:px-6 pb-5">
         <div className="mt-4">
           {loading ? (
             <div className="space-y-2">

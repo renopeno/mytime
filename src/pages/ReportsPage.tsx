@@ -627,7 +627,7 @@ export default function ReportsPage() {
   const clientItems = clients.map((c) => ({ id: c.id, name: c.name }))
 
   return (
-    <div className="space-y-6 px-8 py-8">
+    <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-3xl font-medium tracking-tight">Reports</h1>

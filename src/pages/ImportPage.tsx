@@ -998,7 +998,7 @@ export default function ImportPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-2xl font-semibold tracking-tight">Import</h1>

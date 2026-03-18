@@ -9,6 +9,7 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -56,6 +57,7 @@ const getNavGroups = (companyName?: string | null) => [
 
 export function AppSidebar({ companyName }: { companyName?: string | null }) {
   const { user, signOut } = useAuth()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
   const fullName = (user?.user_metadata?.full_name as string) ?? user?.email ?? 'User'
@@ -89,7 +91,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
             <SidebarMenu>
               {group.items.map((item) => (
                 <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to}>
+                  <NavLink to={item.to} onClick={() => { if (isMobile) setOpenMobile(false) }}>
                     {({ isActive }) => (
                       <SidebarMenuButton isActive={isActive} tooltip={item.label} className="h-9 rounded-lg">
                         <item.icon className="h-4 w-4" />

@@ -76,9 +76,14 @@ export default function ClientsPage() {
   const inactive = clients.filter((c) => !c.is_active)
 
   return (
-    <div className="space-y-6 px-8 py-8">
+    <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-medium tracking-tight">Clients</h1>
+        <div>
+          <h1 className="font-serif text-3xl font-medium tracking-tight">Clients</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your clients and their billing details
+          </p>
+        </div>
         <Button onClick={() => setFormOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Client

@@ -4,12 +4,14 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useProjects } from '@/hooks/useProjects'
+import { useProjectProgress } from '@/hooks/useProjectProgress'
 import { ProjectList } from '@/components/projects/ProjectList'
 import { ProjectForm } from '@/components/projects/ProjectForm'
 import type { ProjectWithClient } from '@/types/app.types'
 
 export default function ProjectsPage() {
   const { projects, loading, deleteProject, updateProject, refetch } = useProjects()
+  const { loggedMinutes } = useProjectProgress()
   const [formOpen, setFormOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<ProjectWithClient | null>(null)
 
@@ -79,9 +81,14 @@ export default function ProjectsPage() {
   const completed = projects.filter((p) => p.is_archived)
 
   return (
-    <div className="space-y-6 px-8 py-8">
+    <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-medium tracking-tight">Projects</h1>
+        <div>
+          <h1 className="font-serif text-3xl font-medium tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground">
+            Organize work by client and track progress
+          </p>
+        </div>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Add Project
@@ -111,6 +118,7 @@ export default function ProjectsPage() {
         <TabsContent value="active" className="mt-4">
           <ProjectList
             projects={active}
+            loggedMinutes={loggedMinutes}
             emptyMessage="No active projects."
             onEdit={handleEdit}
             onDelete={handleDelete}
@@ -123,6 +131,7 @@ export default function ProjectsPage() {
         <TabsContent value="completed" className="mt-4">
           <ProjectList
             projects={completed}
+            loggedMinutes={loggedMinutes}
             emptyMessage="No completed projects."
             onEdit={handleEdit}
             onDelete={handleDelete}
