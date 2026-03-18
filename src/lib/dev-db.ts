@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v2'
+const DEV_DB_VERSION = 'v5'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -51,17 +51,17 @@ function buildSeed() {
   const pWeb = uid(), pEcom = uid(), pMvp = uid(), pBrand = uid(), pInternal = uid()
 
   const clients: Client[] = [
-    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',   email: 'kontakt@acme.hr',    address: 'Ilica 10, Zagreb',     notes: null, color: '#3b82f6', hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',     email: 'info@techstart.hr',  address: null,                   notes: null, color: '#8b5cf6', hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',   email: null,                  address: null,                   notes: 'Prijatelj, bez rate-a', color: '#f59e0b', hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
+    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',   address: 'Ilica 10, Zagreb',     notes: null, hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',     address: null,                   notes: null, hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',   address: null,                   notes: 'Prijatelj, bez rate-a', hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
   ]
 
   const projects: Project[] = [
-    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,   name: 'Website Redesign',   description: 'Kompletni redizajn web stranice', color: '#3b82f6', is_archived: false, hourly_rate: 80,   created_at: now(), updated_at: now() },
-    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,   name: 'E-commerce',         description: 'Shopify integracija i custom cart', color: '#0ea5e9', is_archived: false, hourly_rate: 90,  created_at: now(), updated_at: now() },
-    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,   name: 'MVP razvoj',         description: 'React + Node.js MVP', color: '#8b5cf6', is_archived: false, hourly_rate: 65,               created_at: now(), updated_at: now() },
-    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio, name: 'Brand identitet',    description: 'Logo, boje, tipografija', color: '#f59e0b', is_archived: false, hourly_rate: null,           created_at: now(), updated_at: now() },
-    { id: pInternal, user_id: DEV_USER_ID, client_id: null,    name: 'Interni zadaci',     description: null, color: '#6b7280', is_archived: false, hourly_rate: null,                               created_at: now(), updated_at: now() },
+    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,   name: 'Website Redesign',   description: 'Kompletni redizajn web stranice', color: '#3b82f6', type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
+    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,   name: 'E-commerce',         description: 'Shopify integracija i custom cart', color: '#0ea5e9', type: 'webshop',        is_archived: false, hourly_rate: 90,  estimated_hours: 5,    created_at: now(), updated_at: now() },
+    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,   name: 'MVP razvoj',         description: 'React + Node.js MVP', color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 65,               estimated_hours: 20,   created_at: now(), updated_at: now() },
+    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio, name: 'Brand identitet',    description: 'Logo, boje, tipografija', color: '#f59e0b', type: 'deck_design',   is_archived: false, hourly_rate: null,           estimated_hours: 4,    created_at: now(), updated_at: now() },
+    { id: pInternal, user_id: DEV_USER_ID, client_id: null,    name: 'Interni zadaci',     description: null, color: '#6b7280', type: 'web_design',     is_archived: false, hourly_rate: null,                               estimated_hours: null, created_at: now(), updated_at: now() },
   ]
 
   const timeEntries: TimeEntry[] = [
@@ -164,6 +164,17 @@ export function devDeleteProject(id: string): void {
   save(KEYS.projects, load<Project>(KEYS.projects).filter(p => p.id !== id))
 }
 
+export function devGetProjectLoggedMinutes(): Map<string, number> {
+  const entries = load<TimeEntry>(KEYS.timeEntries)
+  const map = new Map<string, number>()
+  for (const e of entries) {
+    if (e.project_id) {
+      map.set(e.project_id, (map.get(e.project_id) ?? 0) + e.duration_minutes)
+    }
+  }
+  return map
+}
+
 // ─── Time entries ─────────────────────────────────────────────────────────────
 
 export interface DevFetchOptions {
@@ -212,6 +223,27 @@ export function devUpdateTimeEntry(id: string, updates: Partial<TimeEntry>): Tim
 
 export function devDeleteTimeEntry(id: string): void {
   save(KEYS.timeEntries, load<TimeEntry>(KEYS.timeEntries).filter(e => e.id !== id))
+}
+
+export function devBulkImportTimeEntries(
+  entries: Array<{
+    project_id: string | null
+    description: string
+    date: string
+    duration_minutes: number
+    is_paid: boolean
+    is_invoiced: boolean
+  }>
+): void {
+  const existing = load<TimeEntry>(KEYS.timeEntries)
+  const newEntries: TimeEntry[] = entries.map(e => ({
+    ...e,
+    id: uid(),
+    user_id: DEV_USER_ID,
+    created_at: now(),
+    updated_at: now(),
+  }))
+  save(KEYS.timeEntries, [...existing, ...newEntries])
 }
 
 export function devBulkUpdateTimeEntries(ids: string[], updates: Partial<TimeEntry>): void {

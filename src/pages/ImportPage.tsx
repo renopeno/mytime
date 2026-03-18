@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Upload, FileText, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info } from 'lucide-react'
+import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
+import { Upload, FileText, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +36,12 @@ import type {
 import { formatDuration } from '@/lib/duration'
 import { formatCurrency } from '@/lib/format'
 import { useProjects } from '@/hooks/useProjects'
+import { useClients } from '@/hooks/useClients'
+import { devBulkImportTimeEntries } from '@/lib/dev-db'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
+
+const DEV = import.meta.env.DEV
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -515,26 +523,20 @@ function EditableCell({
 
 function MappingStep({
   summaries,
+  mappings,
+  setMappings,
   onBack,
   onNext,
   onUpdateSummaries,
 }: {
   summaries: ProjectSummary[]
+  mappings: MappingRowState[]
+  setMappings: React.Dispatch<React.SetStateAction<MappingRowState[]>>
   onBack: () => void
   onNext: () => void
   onUpdateSummaries: (summaries: ProjectSummary[]) => void
 }) {
   const { projects } = useProjects()
-
-  // Local mapping state — one per summary row
-  const [mappings, setMappings] = useState<MappingRowState[]>(() =>
-    summaries.map((s) => ({
-      action: 'create_new',
-      clientName: s.clientName,
-      projectName: s.projectName,
-      hourlyRate: s.calculatedRate,
-    })),
-  )
 
   const updateRow = (index: number, patch: Partial<MappingRowState>) => {
     setMappings((prev) => {
@@ -706,10 +708,234 @@ function MappingStep({
   )
 }
 
-function ImportStep() {
+// ---------------------------------------------------------------------------
+// Color palette for auto-assigning to new projects
+// ---------------------------------------------------------------------------
+
+const PROJECT_COLORS = [
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#0ea5e9', // sky
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#6366f1', // indigo
+  '#14b8a6', // teal
+  '#f97316', // orange
+]
+
+function autoAssignColor(index: number): string {
+  return PROJECT_COLORS[index % PROJECT_COLORS.length]
+}
+
+// ---------------------------------------------------------------------------
+// Import step
+// ---------------------------------------------------------------------------
+
+function ImportStep({
+  entries,
+  summaries,
+  mappings,
+  onBack,
+}: {
+  entries: ParsedTimeEntry[]
+  summaries: ProjectSummary[]
+  mappings: MappingRowState[]
+  onBack: () => void
+}) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { createClient } = useClients()
+  const { createProject } = useProjects()
+  const [isImporting, setIsImporting] = useState(false)
+
+  // Calculate summary counts
+  const totalEntries = entries.length
+
+  // Unique new clients to create (from rows where action = create_new, deduplicated by client name)
+  const newClientNames = new Set<string>()
+  const newProjectCount = mappings.filter((m) => m.action === 'create_new').length
+
+  for (const m of mappings) {
+    if (m.action === 'create_new' && m.clientName) {
+      newClientNames.add(m.clientName)
+    }
+  }
+  const newClientCount = newClientNames.size
+
+  const handleImport = async () => {
+    if (!user) return
+    setIsImporting(true)
+
+    try {
+      // Step 1: Create new clients and collect their IDs
+      const clientIdByName = new Map<string, string>()
+
+      for (const clientName of newClientNames) {
+        const { data } = await createClient({
+          name: clientName,
+          hourly_rate: null,
+        })
+        if (data) {
+          clientIdByName.set(clientName, data.id)
+        }
+      }
+
+      // Step 2: Create new projects and build project ID map
+      // Maps summary index -> project_id
+      const projectIdBySummaryIndex = new Map<number, string>()
+      let colorIndex = 0
+
+      for (let i = 0; i < mappings.length; i++) {
+        const mapping = mappings[i]
+
+        if (mapping.action === 'create_new') {
+          const clientId = mapping.clientName
+            ? clientIdByName.get(mapping.clientName) ?? null
+            : null
+
+          const { data } = await createProject({
+            name: mapping.projectName || 'Unnamed project',
+            client_id: clientId,
+            color: autoAssignColor(colorIndex++),
+            hourly_rate: mapping.hourlyRate,
+            is_archived: false,
+          })
+          if (data) {
+            projectIdBySummaryIndex.set(i, data.id)
+          }
+        } else {
+          // Mapped to existing project
+          projectIdBySummaryIndex.set(i, mapping.action)
+        }
+      }
+
+      // Step 3: Build a lookup from (clientName+projectName) -> summary index
+      const summaryIndexByKey = new Map<string, number>()
+      for (let i = 0; i < summaries.length; i++) {
+        const key = `${summaries[i].clientName}\0${summaries[i].projectName}`
+        summaryIndexByKey.set(key, i)
+      }
+
+      // Step 4: Build time entries with correct project IDs
+      const importEntries = entries.map((entry) => {
+        const key = `${entry.clientName}\0${entry.projectName}`
+        const summaryIdx = summaryIndexByKey.get(key)
+        const projectId = summaryIdx !== undefined
+          ? projectIdBySummaryIndex.get(summaryIdx) ?? null
+          : null
+
+        return {
+          project_id: projectId,
+          description: entry.description,
+          date: entry.date,
+          duration_minutes: entry.durationMinutes,
+          is_paid: entry.isPaid ?? false,
+          is_invoiced: entry.isInvoiced ?? false,
+        }
+      })
+
+      // Step 5: Bulk import time entries
+      if (DEV) {
+        devBulkImportTimeEntries(importEntries)
+      } else {
+        // Supabase bulk insert
+        const { error } = await supabase.from('time_entries').insert(
+          importEntries.map((e) => ({
+            ...e,
+            user_id: user.id,
+          })),
+        )
+        if (error) throw error
+      }
+
+      toast.success(`Successfully imported ${totalEntries} time entries`)
+      navigate('/time-entries')
+    } catch (err) {
+      console.error('Import failed:', err)
+      toast.error('Import failed. Please try again.')
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   return (
-    <div className="flex items-center justify-center py-12 text-muted-foreground">
-      Import step — coming soon
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="font-serif text-xl font-medium">Import Summary</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review and confirm the import.
+        </p>
+      </div>
+
+      <div className="mx-auto max-w-md space-y-3">
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <span className="text-sm text-muted-foreground">Time entries to import</span>
+          <span className="text-lg font-semibold">{totalEntries}</span>
+        </div>
+        {newClientCount > 0 && (
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <span className="text-sm text-muted-foreground">New clients to create</span>
+            <span className="text-lg font-semibold">{newClientCount}</span>
+          </div>
+        )}
+        {newProjectCount > 0 && (
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <span className="text-sm text-muted-foreground">New projects to create</span>
+            <span className="text-lg font-semibold">{newProjectCount}</span>
+          </div>
+        )}
+
+        {/* Breakdown by project */}
+        <div className="rounded-lg border">
+          <div className="border-b px-4 py-2">
+            <span className="text-sm font-medium">Project breakdown</span>
+          </div>
+          <div className="divide-y">
+            {summaries.map((s, i) => {
+              const mapping = mappings[i]
+              const isExisting = mapping.action !== 'create_new'
+              return (
+                <div key={i} className="flex items-center justify-between px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{mapping.projectName || 'Unnamed project'}</span>
+                    {mapping.clientName && (
+                      <span className="text-xs text-muted-foreground">({mapping.clientName})</span>
+                    )}
+                    <Badge variant={isExisting ? 'secondary' : 'outline'} className="text-xs">
+                      {isExisting ? 'Existing' : 'New'}
+                    </Badge>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {s.entryCount} {s.entryCount === 1 ? 'entry' : 'entries'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="outline" onClick={onBack} disabled={isImporting}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <Button onClick={handleImport} disabled={isImporting}>
+          {isImporting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Importing...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Import {totalEntries} entries
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -730,6 +956,9 @@ export default function ImportPage() {
   const [summaries, setSummaries] = useState<ProjectSummary[]>([])
   const [fileName, setFileName] = useState<string | null>(null)
 
+  // Mapping state — lifted so ImportStep can access it
+  const [mappings, setMappings] = useState<MappingRowState[]>([])
+
   const handleUploadSuccess = useCallback(
     (data: {
       csvData: ParsedCSV
@@ -743,6 +972,15 @@ export default function ImportPage() {
       setEntries(data.entries)
       setSummaries(data.summaries)
       setFileName(data.fileName)
+      // Initialize mapping state from summaries
+      setMappings(
+        data.summaries.map((s) => ({
+          action: 'create_new',
+          clientName: s.clientName,
+          projectName: s.projectName,
+          hourlyRate: s.calculatedRate,
+        })),
+      )
       setError(null)
       setCompletedSteps((prev) => new Set([...prev, 'upload']))
       setStep('preview')
@@ -796,6 +1034,8 @@ export default function ImportPage() {
           {step === 'mapping' && (
             <MappingStep
               summaries={summaries}
+              mappings={mappings}
+              setMappings={setMappings}
               onBack={() => setStep('preview')}
               onNext={() => {
                 setCompletedSteps((prev) => new Set([...prev, 'mapping']))
@@ -804,7 +1044,14 @@ export default function ImportPage() {
               onUpdateSummaries={setSummaries}
             />
           )}
-          {step === 'import' && <ImportStep />}
+          {step === 'import' && (
+            <ImportStep
+              entries={entries}
+              summaries={summaries}
+              mappings={mappings}
+              onBack={() => setStep('mapping')}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
