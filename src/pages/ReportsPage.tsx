@@ -297,7 +297,6 @@ function LayeredRingChart({
   centerLabel,
   centerValue,
   activeIndex,
-  onSegmentHover,
   onSegmentClick,
 }: {
   segments: Array<{ name: string; value: number; color: string }>
@@ -306,7 +305,6 @@ function LayeredRingChart({
   centerLabel?: string
   centerValue?: string
   activeIndex?: number | null
-  onSegmentHover?: (index: number | null) => void
   onSegmentClick?: (index: number) => void
 }) {
   const radius = (size - strokeWidth) / 2
@@ -336,13 +334,10 @@ function LayeredRingChart({
       }
     })
 
-  const isInteractive = onSegmentHover || onSegmentClick
-
   return (
     <div
       className="relative"
       style={{ width: size, height: size }}
-      onMouseLeave={() => onSegmentHover?.(null)}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {/* Background ring */}
@@ -356,25 +351,26 @@ function LayeredRingChart({
           strokeWidth={strokeWidth * 0.6}
         />
         {/* Segment arcs — each subsequent segment overlaps the previous one */}
-        {arcs.map((arc) => (
-          <circle
-            key={arc.name}
-            cx={cx}
-            cy={cy}
-            r={radius}
-            fill="none"
-            stroke={arc.color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${arc.arcLength} ${circumference - arc.arcLength}`}
-            strokeDashoffset={arc.dashOffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${cx} ${cy})`}
-            opacity={activeIndex != null && activeIndex !== arc.index ? 0.35 : 1}
-            className={isInteractive ? 'cursor-pointer transition-opacity duration-200' : 'transition-opacity duration-200'}
-            onMouseEnter={() => onSegmentHover?.(arc.index)}
-            onClick={() => onSegmentClick?.(arc.index)}
-          />
-        ))}
+        {arcs.map((arc) => {
+          const isActive = activeIndex == null || activeIndex === arc.index
+          return (
+            <circle
+              key={arc.name}
+              cx={cx}
+              cy={cy}
+              r={radius}
+              fill="none"
+              stroke={arc.color}
+              strokeWidth={isActive ? strokeWidth : strokeWidth * 0.7}
+              strokeDasharray={`${arc.arcLength} ${circumference - arc.arcLength}`}
+              strokeDashoffset={arc.dashOffset}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${cx} ${cy})`}
+              className={onSegmentClick ? 'cursor-pointer transition-all duration-200' : 'transition-all duration-200'}
+              onClick={() => onSegmentClick?.(arc.index)}
+            />
+          )
+        })}
       </svg>
       {/* Center text */}
       {(centerLabel || centerValue) && (
@@ -413,13 +409,11 @@ function BillingDonutChart({
 
   const segments = useMemo(() => allStatuses.filter(s => s.value > 0), [allStatuses])
 
-  // Default selected: Not Paid (index 0 in allStatuses, find its index in segments)
+  // Default selected: Not Paid — click only, no hover
   const defaultIndex = segments.findIndex(s => s.name === 'Not Paid')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(defaultIndex >= 0 ? defaultIndex : 0)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const activeIndex = hoveredIndex ?? selectedIndex
-  const activeSegment = activeIndex != null ? segments[activeIndex] : null
+  const activeSegment = selectedIndex != null ? segments[selectedIndex] : null
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
@@ -438,33 +432,30 @@ function BillingDonutChart({
                 segments={segments}
                 centerLabel={activeSegment?.name ?? 'Total'}
                 centerValue={formatCurrency(activeSegment?.value ?? total)}
-                activeIndex={activeIndex}
-                onSegmentHover={setHoveredIndex}
+                activeIndex={selectedIndex}
                 onSegmentClick={(i) => setSelectedIndex(i)}
               />
             </div>
-            {/* Legend — with percentages, clickable */}
-            <div className="flex flex-col gap-3">
+            {/* Legend — with percentages, click only */}
+            <div className="flex flex-col gap-3 min-w-0 flex-1">
               {allStatuses.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
-                const isActive = segIdx >= 0 && segIdx === activeIndex
+                const isActive = segIdx >= 0 && segIdx === selectedIndex
                 const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
                 return (
                   <button
                     key={item.name}
                     className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
-                    onMouseEnter={() => segIdx >= 0 && setHoveredIndex(segIdx)}
-                    onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => segIdx >= 0 && setSelectedIndex(segIdx)}
                   >
                     <span
-                      className="inline-block h-3 w-3 shrink-0 rounded-full transition-opacity duration-200"
-                      style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
+                      className="inline-block h-3 w-3 shrink-0 rounded-full"
+                      style={{ backgroundColor: item.color }}
                     />
                     <span className={`text-sm transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
                     </span>
-                    <span className={`ml-auto text-sm tabular-nums transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`ml-auto shrink-0 text-sm tabular-nums transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {pct}%
                     </span>
                   </button>
@@ -528,10 +519,8 @@ function EarningsDonutChart({
 
   const total = segments.reduce((sum, s) => sum + s.value, 0)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const activeIndex = hoveredIndex ?? selectedIndex
-  const activeSegment = activeIndex != null ? segments[activeIndex] : null
+  const activeSegment = selectedIndex != null ? segments[selectedIndex] : null
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
@@ -550,28 +539,25 @@ function EarningsDonutChart({
                 segments={segments}
                 centerLabel={activeSegment?.name ?? 'Total'}
                 centerValue={formatCurrency(activeSegment?.value ?? total)}
-                activeIndex={activeIndex}
-                onSegmentHover={setHoveredIndex}
+                activeIndex={selectedIndex}
                 onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
-            {/* Legend — with percentages, clickable */}
+            {/* Legend — with percentages, click only */}
             <div className="flex flex-col gap-2 min-w-0 flex-1">
               {legendItems.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
-                const isActive = segIdx >= 0 && segIdx === activeIndex
+                const isActive = segIdx >= 0 && segIdx === selectedIndex
                 const pct = total > 0 ? Math.round((item.amount / total) * 100) : 0
                 return (
                   <button
                     key={item.name}
                     className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
-                    onMouseEnter={() => segIdx >= 0 && setHoveredIndex(segIdx)}
-                    onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => segIdx >= 0 && setSelectedIndex(prev => prev === segIdx ? null : segIdx)}
                   >
                     <span
-                      className="inline-block h-3 w-3 shrink-0 rounded-full transition-opacity duration-200"
-                      style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
+                      className="inline-block h-3 w-3 shrink-0 rounded-full"
+                      style={{ backgroundColor: item.color }}
                     />
                     <span className={`text-sm truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
