@@ -296,12 +296,18 @@ function LayeredRingChart({
   strokeWidth = 30,
   centerLabel,
   centerValue,
+  activeIndex,
+  onSegmentHover,
+  onSegmentClick,
 }: {
   segments: Array<{ name: string; value: number; color: string }>
   size?: number
   strokeWidth?: number
   centerLabel?: string
   centerValue?: string
+  activeIndex?: number | null
+  onSegmentHover?: (index: number | null) => void
+  onSegmentClick?: (index: number) => void
 }) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
@@ -317,20 +323,27 @@ function LayeredRingChart({
   let cumulativeOffset = 0
   const arcs = segments
     .filter((s) => s.value > 0)
-    .map((seg) => {
+    .map((seg, i) => {
       const fraction = seg.value / total
       const arcLength = Math.max(0, (fraction - gapFraction) * circumference)
       const offset = cumulativeOffset
       cumulativeOffset += fraction * circumference
       return {
         ...seg,
+        index: i,
         arcLength,
         dashOffset: -offset - (gapFraction / 2) * circumference,
       }
     })
 
+  const isInteractive = onSegmentHover || onSegmentClick
+
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div
+      className="relative"
+      style={{ width: size, height: size }}
+      onMouseLeave={() => onSegmentHover?.(null)}
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {/* Background ring */}
         <circle
@@ -356,14 +369,18 @@ function LayeredRingChart({
             strokeDashoffset={arc.dashOffset}
             strokeLinecap="round"
             transform={`rotate(-90 ${cx} ${cy})`}
+            opacity={activeIndex != null && activeIndex !== arc.index ? 0.35 : 1}
+            className={isInteractive ? 'cursor-pointer transition-opacity duration-200' : 'transition-opacity duration-200'}
+            onMouseEnter={() => onSegmentHover?.(arc.index)}
+            onClick={() => onSegmentClick?.(arc.index)}
           />
         ))}
       </svg>
       {/* Center text */}
       {(centerLabel || centerValue) && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          {centerLabel && <span className="text-xs text-muted-foreground">{centerLabel}</span>}
-          {centerValue && <span className="font-serif text-lg font-bold">{centerValue}</span>}
+          {centerLabel && <span className="text-xs text-muted-foreground transition-all duration-200">{centerLabel}</span>}
+          {centerValue && <span className="font-serif text-lg font-bold transition-all duration-200">{centerValue}</span>}
         </div>
       )}
     </div>
@@ -388,19 +405,21 @@ function BillingDonutChart({
   const { billingBreakdown } = data
   const total = billingBreakdown.notPaid + billingBreakdown.invoiceSent + billingBreakdown.paid
 
-  const segments = useMemo(() => {
-    const result: Array<{ name: string; value: number; color: string }> = []
-    if (billingBreakdown.notPaid > 0) {
-      result.push({ name: 'Not Paid', value: Math.round(billingBreakdown.notPaid * 100) / 100, color: BILLING_COLORS.notPaid })
-    }
-    if (billingBreakdown.invoiceSent > 0) {
-      result.push({ name: 'Invoice Sent', value: Math.round(billingBreakdown.invoiceSent * 100) / 100, color: BILLING_COLORS.invoiceSent })
-    }
-    if (billingBreakdown.paid > 0) {
-      result.push({ name: 'Paid', value: Math.round(billingBreakdown.paid * 100) / 100, color: BILLING_COLORS.paid })
-    }
-    return result
-  }, [billingBreakdown])
+  const allStatuses = useMemo(() => [
+    { name: 'Not Paid', value: Math.round(billingBreakdown.notPaid * 100) / 100, color: BILLING_COLORS.notPaid },
+    { name: 'Invoice Sent', value: Math.round(billingBreakdown.invoiceSent * 100) / 100, color: BILLING_COLORS.invoiceSent },
+    { name: 'Paid', value: Math.round(billingBreakdown.paid * 100) / 100, color: BILLING_COLORS.paid },
+  ], [billingBreakdown])
+
+  const segments = useMemo(() => allStatuses.filter(s => s.value > 0), [allStatuses])
+
+  // Default selected: Not Paid (index 0 in allStatuses, find its index in segments)
+  const defaultIndex = segments.findIndex(s => s.name === 'Not Paid')
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(defaultIndex >= 0 ? defaultIndex : 0)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+  const activeIndex = hoveredIndex ?? selectedIndex
+  const activeSegment = activeIndex != null ? segments[activeIndex] : null
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
@@ -417,28 +436,36 @@ function BillingDonutChart({
             <div className="shrink-0">
               <LayeredRingChart
                 segments={segments}
-                centerLabel="Total"
-                centerValue={formatCurrency(total)}
+                centerLabel={activeSegment?.name ?? 'Total'}
+                centerValue={formatCurrency(activeSegment?.value ?? total)}
+                activeIndex={activeIndex}
+                onSegmentHover={setHoveredIndex}
+                onSegmentClick={(i) => setSelectedIndex(i)}
               />
             </div>
-            {/* Legend */}
+            {/* Legend — no values, clickable */}
             <div className="flex flex-col gap-3">
-              {[
-                { label: 'Not Paid', amount: billingBreakdown.notPaid, color: BILLING_COLORS.notPaid },
-                { label: 'Invoice Sent', amount: billingBreakdown.invoiceSent, color: BILLING_COLORS.invoiceSent },
-                { label: 'Paid', amount: billingBreakdown.paid, color: BILLING_COLORS.paid },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2.5">
-                  <span
-                    className="inline-block h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
-                  </div>
-                </div>
-              ))}
+              {allStatuses.map((item) => {
+                const segIdx = segments.findIndex(s => s.name === item.name)
+                const isActive = segIdx >= 0 && segIdx === activeIndex
+                return (
+                  <button
+                    key={item.name}
+                    className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
+                    onMouseEnter={() => segIdx >= 0 && setHoveredIndex(segIdx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    onClick={() => segIdx >= 0 && setSelectedIndex(segIdx)}
+                  >
+                    <span
+                      className="inline-block h-3 w-3 shrink-0 rounded-full transition-opacity duration-200"
+                      style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
+                    />
+                    <span className={`text-sm transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                      {item.name}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -496,6 +523,11 @@ function EarningsDonutChart({
   }, [data.byClient])
 
   const total = segments.reduce((sum, s) => sum + s.value, 0)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+  const activeIndex = hoveredIndex ?? selectedIndex
+  const activeSegment = activeIndex != null ? segments[activeIndex] : null
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
@@ -512,24 +544,36 @@ function EarningsDonutChart({
             <div className="shrink-0">
               <LayeredRingChart
                 segments={segments}
-                centerLabel="Total"
-                centerValue={formatCurrency(total)}
+                centerLabel={activeSegment?.name ?? 'Total'}
+                centerValue={formatCurrency(activeSegment?.value ?? total)}
+                activeIndex={activeIndex}
+                onSegmentHover={setHoveredIndex}
+                onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
-            {/* Legend */}
-            <div className="flex flex-col gap-2.5 min-w-0 flex-1">
-              {legendItems.map((item) => (
-                <div key={item.name} className="flex items-center gap-2.5">
-                  <span
-                    className="inline-block h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm text-muted-foreground truncate">{item.name}</span>
-                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
-                  </div>
-                </div>
-              ))}
+            {/* Legend — clickable */}
+            <div className="flex flex-col gap-2 min-w-0 flex-1">
+              {legendItems.map((item) => {
+                const segIdx = segments.findIndex(s => s.name === item.name)
+                const isActive = segIdx >= 0 && segIdx === activeIndex
+                return (
+                  <button
+                    key={item.name}
+                    className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
+                    onMouseEnter={() => segIdx >= 0 && setHoveredIndex(segIdx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    onClick={() => segIdx >= 0 && setSelectedIndex(prev => prev === segIdx ? null : segIdx)}
+                  >
+                    <span
+                      className="inline-block h-3 w-3 shrink-0 rounded-full transition-opacity duration-200"
+                      style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
+                    />
+                    <span className={`text-sm truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                      {item.name}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
