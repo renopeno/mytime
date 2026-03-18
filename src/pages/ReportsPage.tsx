@@ -355,8 +355,8 @@ function LayeredRingChart({
           className="text-muted/40"
           strokeWidth={strokeWidth * 0.6}
         />
-        {/* Segment arcs — reversed so first segment renders last (on top) */}
-        {[...arcs].reverse().map((arc) => (
+        {/* Segment arcs — each subsequent segment overlaps the previous one */}
+        {arcs.map((arc) => (
           <circle
             key={arc.name}
             cx={cx}
@@ -443,11 +443,12 @@ function BillingDonutChart({
                 onSegmentClick={(i) => setSelectedIndex(i)}
               />
             </div>
-            {/* Legend — no values, clickable */}
+            {/* Legend — with percentages, clickable */}
             <div className="flex flex-col gap-3">
               {allStatuses.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
                 const isActive = segIdx >= 0 && segIdx === activeIndex
+                const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
                 return (
                   <button
                     key={item.name}
@@ -462,6 +463,9 @@ function BillingDonutChart({
                     />
                     <span className={`text-sm transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
+                    </span>
+                    <span className="ml-auto text-sm tabular-nums text-muted-foreground">
+                      {pct}%
                     </span>
                   </button>
                 )
@@ -551,11 +555,12 @@ function EarningsDonutChart({
                 onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
-            {/* Legend — clickable */}
+            {/* Legend — with percentages, clickable */}
             <div className="flex flex-col gap-2 min-w-0 flex-1">
               {legendItems.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
                 const isActive = segIdx >= 0 && segIdx === activeIndex
+                const pct = total > 0 ? Math.round((item.amount / total) * 100) : 0
                 return (
                   <button
                     key={item.name}
@@ -570,6 +575,9 @@ function EarningsDonutChart({
                     />
                     <span className={`text-sm truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
+                    </span>
+                    <span className="ml-auto shrink-0 text-sm tabular-nums text-muted-foreground">
+                      {pct}%
                     </span>
                   </button>
                 )
