@@ -37,6 +37,7 @@ import { formatDuration } from '@/lib/duration'
 import { formatCurrency } from '@/lib/format'
 import { useProjects } from '@/hooks/useProjects'
 import { useClients } from '@/hooks/useClients'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { devBulkImportTimeEntries } from '@/lib/dev-db'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -361,7 +362,7 @@ function PreviewStep({
       </div>
 
       {/* Preview table */}
-      <div className="rounded-lg border">
+      <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -376,16 +377,16 @@ function PreviewStep({
           <TableBody>
             {previewEntries.map((entry, i) => (
               <TableRow key={i}>
-                <TableCell className="font-medium">{entry.date}</TableCell>
-                <TableCell>{entry.projectName || <span className="text-muted-foreground">—</span>}</TableCell>
-                <TableCell>{entry.clientName || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell className="font-medium whitespace-nowrap">{entry.date}</TableCell>
+                <TableCell className="whitespace-nowrap">{entry.projectName || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell className="whitespace-nowrap">{entry.clientName || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell className="max-w-[200px] truncate" title={entry.description}>
                   {entry.description || <span className="text-muted-foreground">—</span>}
                 </TableCell>
-                <TableCell className="text-right font-mono text-sm">
+                <TableCell className="text-right font-mono text-sm whitespace-nowrap">
                   {formatDuration(entry.durationMinutes)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   <BillingStatusBadge isPaid={entry.isPaid} isInvoiced={entry.isInvoiced} />
                 </TableCell>
               </TableRow>
@@ -541,6 +542,7 @@ function MappingStep({
   onUpdateSummaries: (summaries: ProjectSummary[]) => void
 }) {
   const { projects } = useProjects()
+  const isMobile = useIsMobile()
 
   const updateRow = (index: number, patch: Partial<MappingRowState>) => {
     setMappings((prev) => {
@@ -600,26 +602,30 @@ function MappingStep({
         </p>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Client</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead className="text-right">Rate</TableHead>
-              <TableHead className="text-right">Hours</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mappings.map((row, i) => {
-              const summary = summaries[i]
-              const isMapped = row.action !== 'create_new'
+      {isMobile ? (
+        /* Mobile: card layout per project */
+        <div className="space-y-3">
+          {mappings.map((row, i) => {
+            const summary = summaries[i]
+            const isMapped = row.action !== 'create_new'
 
-              return (
-                <TableRow key={i}>
-                  <TableCell>
+            return (
+              <div key={i} className="rounded-lg border bg-card p-4 space-y-3">
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Project</p>
+                    {isMapped ? (
+                      <span className="text-sm font-medium">{row.projectName}</span>
+                    ) : (
+                      <EditableCell
+                        value={row.projectName}
+                        onChange={(v) => updateRow(i, { projectName: v })}
+                        placeholder="Unnamed project"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Client</p>
                     {isMapped ? (
                       <span className="text-sm text-muted-foreground">{row.clientName || '—'}</span>
                     ) : (
@@ -629,19 +635,11 @@ function MappingStep({
                         placeholder="No client"
                       />
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {isMapped ? (
-                      <span className="text-sm">{row.projectName}</span>
-                    ) : (
-                      <EditableCell
-                        value={row.projectName}
-                        onChange={(v) => updateRow(i, { projectName: v })}
-                        placeholder="Unnamed project"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Rate</p>
                     <EditableCell
                       value={row.hourlyRate != null ? String(row.hourlyRate) : ''}
                       onChange={(v) => {
@@ -650,45 +648,138 @@ function MappingStep({
                       }}
                       placeholder="—"
                       type="number"
-                      className="text-right"
                     />
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
-                    {formatHours(summary.totalMinutes)}
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {summary.totalAmount != null
-                      ? formatCurrency(summary.totalAmount)
-                      : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={row.action}
-                      onValueChange={(v) => handleActionChange(i, v)}
-                    >
-                      <SelectTrigger className="h-8 w-[180px] text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="create_new">Create new</SelectItem>
-                        {projects.length > 0 && (
-                          <>
-                            {projects.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.name}{p.client ? ` (${p.client.name})` : ''}
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Hours</p>
+                    <p className="px-1.5 py-0.5 text-sm font-mono">{formatHours(summary.totalMinutes)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Amount</p>
+                    <p className="px-1.5 py-0.5 text-sm">
+                      {summary.totalAmount != null ? formatCurrency(summary.totalAmount) : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Action</p>
+                  <Select
+                    value={row.action}
+                    onValueChange={(v) => handleActionChange(i, v)}
+                  >
+                    <SelectTrigger className="h-8 w-full text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="create_new">Create new</SelectItem>
+                      {projects.length > 0 && (
+                        <>
+                          {projects.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}{p.client ? ` (${p.client.name})` : ''}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        /* Desktop: table layout */
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead className="text-right">Rate</TableHead>
+                <TableHead className="text-right">Hours</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mappings.map((row, i) => {
+                const summary = summaries[i]
+                const isMapped = row.action !== 'create_new'
+
+                return (
+                  <TableRow key={i}>
+                    <TableCell>
+                      {isMapped ? (
+                        <span className="text-sm text-muted-foreground">{row.clientName || '—'}</span>
+                      ) : (
+                        <EditableCell
+                          value={row.clientName}
+                          onChange={(v) => updateRow(i, { clientName: v })}
+                          placeholder="No client"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isMapped ? (
+                        <span className="text-sm">{row.projectName}</span>
+                      ) : (
+                        <EditableCell
+                          value={row.projectName}
+                          onChange={(v) => updateRow(i, { projectName: v })}
+                          placeholder="Unnamed project"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <EditableCell
+                        value={row.hourlyRate != null ? String(row.hourlyRate) : ''}
+                        onChange={(v) => {
+                          const num = parseFloat(v)
+                          updateRow(i, { hourlyRate: isNaN(num) ? null : num })
+                        }}
+                        placeholder="—"
+                        type="number"
+                        className="text-right"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatHours(summary.totalMinutes)}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {summary.totalAmount != null
+                        ? formatCurrency(summary.totalAmount)
+                        : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={row.action}
+                        onValueChange={(v) => handleActionChange(i, v)}
+                      >
+                        <SelectTrigger className="h-8 w-[180px] text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="create_new">Create new</SelectItem>
+                          {projects.length > 0 && (
+                            <>
+                              {projects.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.name}{p.client ? ` (${p.client.name})` : ''}
+                                </SelectItem>
+                              ))}
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />

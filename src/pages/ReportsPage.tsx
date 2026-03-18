@@ -351,7 +351,7 @@ function BreakdownChart({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle>Earnings Breakdown</CardTitle>
         <SegmentControl
           options={[
@@ -458,7 +458,7 @@ function TrendChart({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle>Trend</CardTitle>
         <SegmentControl
           options={[
@@ -629,7 +629,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-serif text-3xl font-medium tracking-tight">Reports</h1>
         <Button onClick={handleExportPDF}>
           <FileText className="mr-2 h-4 w-4" />
@@ -639,11 +639,11 @@ export default function ReportsPage() {
 
       {/* Date Range Picker */}
       <div className="flex flex-wrap items-center gap-3">
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <DateRangePicker value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
         {compareMode && (
           <>
             <span className="text-sm text-muted-foreground">vs</span>
-            <DateRangePicker value={compareDateRange} onChange={setCompareDateRange} />
+            <DateRangePicker value={compareDateRange} onChange={setCompareDateRange} className="w-full sm:w-auto" />
           </>
         )}
       </div>

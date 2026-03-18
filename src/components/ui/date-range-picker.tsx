@@ -29,6 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export interface DateRange {
   from: Date
@@ -146,6 +147,7 @@ function formatRangeLabel(range: DateRange): string {
 }
 
 function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
+  const isMobile = useIsMobile()
   const [open, setOpen] = React.useState(false)
   const [selectionStart, setSelectionStart] = React.useState<Date | null>(null)
   const [hoverDate, setHoverDate] = React.useState<Date | null>(null)
@@ -231,13 +233,25 @@ function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-auto p-0 flex flex-row"
+        className={cn(
+          "w-auto p-0",
+          isMobile ? "flex flex-col max-h-[80vh] overflow-y-auto" : "flex flex-row"
+        )}
       >
-        {/* Left panel — presets */}
-        <div className="flex flex-col gap-0.5 border-r border-border p-2 min-w-[140px]">
-          <p className="px-2 pt-1 pb-2 text-xs font-medium text-muted-foreground select-none">
-            Quick select
-          </p>
+        {/* Presets panel — top on mobile, left on desktop */}
+        <div
+          className={cn(
+            "flex gap-0.5 p-2",
+            isMobile
+              ? "flex-row flex-wrap border-b border-border"
+              : "flex-col border-r border-border min-w-[140px]"
+          )}
+        >
+          {!isMobile && (
+            <p className="px-2 pt-1 pb-2 text-xs font-medium text-muted-foreground select-none">
+              Quick select
+            </p>
+          )}
           {presets.map((preset) => {
             const isActive = getMatchingPresetLabel(value) === preset.label && !selectionStart
             return (
@@ -245,7 +259,7 @@ function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
                 key={preset.label}
                 onClick={() => handlePresetClick(preset)}
                 className={cn(
-                  "rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
+                  "rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted whitespace-nowrap",
                   isActive && "bg-muted font-medium"
                 )}
               >
@@ -255,8 +269,8 @@ function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
           })}
         </div>
 
-        {/* Right panel — two calendars */}
-        <div className="flex flex-row p-2 gap-2">
+        {/* Calendars — single on mobile, two side-by-side on desktop */}
+        <div className={cn("flex p-2 gap-2", isMobile ? "flex-col" : "flex-row")}>
           <Calendar
             {...calendarProps}
             month={leftMonth}
@@ -267,16 +281,18 @@ function DateRangePicker({ value, onChange, className }: DateRangePickerProps) {
             hideNavigation={false}
             disableNavigation={false}
           />
-          <Calendar
-            {...calendarProps}
-            month={rightMonth}
-            onMonthChange={(m) => setLeftMonth(addMonths(m, -1))}
-            onDayClick={handleDayClick}
-            onDayMouseEnter={handleDayHover}
-            captionLayout="label"
-            hideNavigation={false}
-            disableNavigation={false}
-          />
+          {!isMobile && (
+            <Calendar
+              {...calendarProps}
+              month={rightMonth}
+              onMonthChange={(m) => setLeftMonth(addMonths(m, -1))}
+              onDayClick={handleDayClick}
+              onDayMouseEnter={handleDayHover}
+              captionLayout="label"
+              hideNavigation={false}
+              disableNavigation={false}
+            />
+          )}
         </div>
       </PopoverContent>
     </Popover>
