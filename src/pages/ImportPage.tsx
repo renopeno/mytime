@@ -438,6 +438,10 @@ interface MappingRowState {
   clientName: string
   projectName: string
   hourlyRate: number | null
+  /** Original client name from CSV — used for entry lookup even after renaming */
+  originalClientName: string
+  /** Original project name from CSV — used for entry lookup even after renaming */
+  originalProjectName: string
 }
 
 // ---------------------------------------------------------------------------
@@ -811,10 +815,13 @@ function ImportStep({
         }
       }
 
-      // Step 3: Build a lookup from (clientName+projectName) -> summary index
+      // Step 3: Build a lookup from ORIGINAL (clientName+projectName) -> summary index
+      // We use originalClientName/originalProjectName from the mapping state because
+      // summaries may have been renamed by the user in the MappingStep, but entries
+      // still carry the original CSV names.
       const summaryIndexByKey = new Map<string, number>()
-      for (let i = 0; i < summaries.length; i++) {
-        const key = `${summaries[i].clientName}\0${summaries[i].projectName}`
+      for (let i = 0; i < mappings.length; i++) {
+        const key = `${mappings[i].originalClientName}\0${mappings[i].originalProjectName}`
         summaryIndexByKey.set(key, i)
       }
 
@@ -979,6 +986,8 @@ export default function ImportPage() {
           clientName: s.clientName,
           projectName: s.projectName,
           hourlyRate: s.calculatedRate,
+          originalClientName: s.clientName,
+          originalProjectName: s.projectName,
         })),
       )
       setError(null)
