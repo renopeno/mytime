@@ -14,7 +14,6 @@ const ClientsPage = lazy(() => import('@/pages/ClientsPage'))
 const InvoicingPage = lazy(() => import('@/pages/InvoicingPage'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
-const ImportPage = lazy(() => import('@/pages/ImportPage'))
 
 function ProtectedRoute() {
   const { user, loading } = useAuth()
@@ -76,7 +75,6 @@ const router = createBrowserRouter([
           { path: 'invoicing', element: <SuspenseWrapper><InvoicingPage /></SuspenseWrapper> },
           { path: 'dashboard', element: <Navigate to="/reports" replace /> },
           { path: 'reports', element: <SuspenseWrapper><ReportsPage /></SuspenseWrapper> },
-          { path: 'import', element: <SuspenseWrapper><ImportPage /></SuspenseWrapper> },
           { path: 'settings', element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper> },
         ],
       },

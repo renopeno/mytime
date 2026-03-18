@@ -24,7 +24,6 @@ import {
   FolderKanban,
   Users,
   Receipt,
-  Upload,
   FileText,
   LogOut,
   Settings2,
@@ -44,7 +43,6 @@ const getNavGroups = (companyName?: string | null) => [
     items: [
       { label: 'Projects', icon: FolderKanban, to: '/projects' },
       { label: 'Clients', icon: Users, to: '/clients' },
-      { label: 'Import', icon: Upload, to: '/import' },
     ],
   },
   {
