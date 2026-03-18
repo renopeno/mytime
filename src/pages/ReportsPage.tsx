@@ -361,12 +361,13 @@ function LayeredRingChart({
               r={radius}
               fill="none"
               stroke={arc.color}
-              strokeWidth={isActive ? strokeWidth : strokeWidth * 0.7}
+              strokeWidth={strokeWidth}
               strokeDasharray={`${arc.arcLength} ${circumference - arc.arcLength}`}
               strokeDashoffset={arc.dashOffset}
               strokeLinecap="round"
               transform={`rotate(-90 ${cx} ${cy})`}
-              className={onSegmentClick ? 'cursor-pointer transition-all duration-200' : 'transition-all duration-200'}
+              style={{ filter: isActive ? 'none' : 'brightness(1.3) saturate(0.5)' }}
+              className={onSegmentClick ? 'cursor-pointer transition-[filter] duration-200' : 'transition-[filter] duration-200'}
               onClick={() => onSegmentClick?.(arc.index)}
             />
           )
