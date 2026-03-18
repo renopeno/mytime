@@ -462,10 +462,7 @@ function BillingDonutChart({
                       style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
                     />
                     <span className={`text-sm transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-                      {item.name}
-                    </span>
-                    <span className="ml-auto text-sm tabular-nums text-muted-foreground">
-                      {pct}%
+                      {item.name} {pct}%
                     </span>
                   </button>
                 )
@@ -574,10 +571,7 @@ function EarningsDonutChart({
                       style={{ backgroundColor: item.color, opacity: activeIndex != null && segIdx !== activeIndex ? 0.4 : 1 }}
                     />
                     <span className={`text-sm truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-                      {item.name}
-                    </span>
-                    <span className="ml-auto shrink-0 text-sm tabular-nums text-muted-foreground">
-                      {pct}%
+                      {item.name} {pct}%
                     </span>
                   </button>
                 )
