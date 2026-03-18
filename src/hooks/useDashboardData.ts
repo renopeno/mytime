@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useSettings } from '@/hooks/useSettings'
-import { format } from 'date-fns'
+import { format, eachDayOfInterval, isWeekend } from 'date-fns'
 import { devGetTimeEntries } from '@/lib/dev-db'
 import type { TimeEntryWithProject } from '@/types/app.types'
 
@@ -20,6 +20,7 @@ export interface DashboardData {
   totalMinutes: number
   totalAmount: number
   workingDays: number
+  totalWorkingDays: number
   billingBreakdown: {
     notPaid: number
     invoiceSent: number
@@ -45,6 +46,7 @@ const EMPTY_DATA: DashboardData = {
   totalMinutes: 0,
   totalAmount: 0,
   workingDays: 0,
+  totalWorkingDays: 0,
   billingBreakdown: { notPaid: 0, invoiceSent: 0, paid: 0 },
   byProject: [],
   byClient: [],
@@ -171,10 +173,15 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
         })
       }
 
+      // Count Mon–Fri days in the selected date range
+      const totalWorkingDays = eachDayOfInterval({ start: filters.from, end: filters.to })
+        .filter((d) => !isWeekend(d)).length
+
       setData({
         totalMinutes,
         totalAmount,
         workingDays: uniqueDates.size,
+        totalWorkingDays,
         billingBreakdown,
         byProject: Array.from(projectMap.values()),
         byClient: Array.from(clientMap.values()),

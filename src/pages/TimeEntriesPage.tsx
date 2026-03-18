@@ -217,7 +217,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Time this week</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-semibold">{formatDuration(weekMinutes)}</p>
+                <p className="font-serif text-xl font-medium">{formatDuration(weekMinutes)}</p>
                 <ComparisonBadge
                   current={weekMinutes}
                   previous={lastWeekMinutes}
@@ -230,7 +230,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Earned this week</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-semibold">{formatCurrency(weekEarned)}</p>
+                <p className="font-serif text-xl font-medium">{formatCurrency(weekEarned)}</p>
                 <ComparisonBadge
                   current={weekEarned}
                   previous={lastWeekEarned}
@@ -243,7 +243,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Earned this month</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-semibold">{formatCurrency(monthlyEarned)}</p>
+                <p className="font-serif text-xl font-medium">{formatCurrency(monthlyEarned)}</p>
                 <ComparisonBadge
                   current={monthlyEarned}
                   previous={lastMonthEarned}

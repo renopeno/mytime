@@ -72,13 +72,13 @@ export default function LoginPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
               <Clock className="h-6 w-6 text-secondary" />
             </div>
-            <span className="font-serif text-4xl font-bold tracking-tight text-primary-foreground">
+            <span className="font-serif text-4xl font-medium tracking-tight text-primary-foreground">
               MyTime
             </span>
           </div>
 
           {/* Tagline */}
-          <h2 className="mb-4 font-serif text-3xl font-bold leading-tight text-primary-foreground lg:text-4xl">
+          <h2 className="mb-4 font-serif text-3xl font-medium leading-tight text-primary-foreground lg:text-4xl">
             Track your time.
             <br />
             <span className="text-secondary">Grow your business.</span>
@@ -110,7 +110,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Heading */}
           <div className="mb-8">
-            <h1 className="font-serif text-2xl font-bold text-foreground">
+            <h1 className="font-serif text-2xl font-medium text-foreground">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">

@@ -78,7 +78,7 @@ export function TimeEntryList({ entries, onDelete, onDuplicate, onUpdate, onAdd 
           <div key={date} className={isMobile ? '' : 'rounded-lg border'}>
             {/* Date header */}
             <div className={`group relative flex items-center gap-3 ${isMobile ? 'px-0 py-2' : 'rounded-t-lg border-b bg-muted/50 px-3 py-3'}`}>
-              <span className="font-serif text-sm font-semibold">
+              <span className="font-serif text-sm font-medium leading-none">
                 {format(parseISO(date), isMobile ? 'EEE, d. MMM' : 'EEEE, d. MMMM yyyy')}
               </span>
               {onAdd && (

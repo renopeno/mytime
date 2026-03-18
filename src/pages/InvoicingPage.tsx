@@ -259,19 +259,19 @@ export default function InvoicingPage() {
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total entries</p>
-            <p className="font-serif text-xl font-bold">{loading ? '—' : entries.length}</p>
+            <p className="font-serif text-xl font-medium">{loading ? '—' : entries.length}</p>
           </CardContent>
         </Card>
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total hours</p>
-            <p className="font-serif text-xl font-bold">{loading ? '—' : formatDuration(totals.totalMinutes)}</p>
+            <p className="font-serif text-xl font-medium">{loading ? '—' : formatDuration(totals.totalMinutes)}</p>
           </CardContent>
         </Card>
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total amount</p>
-            <p className="font-serif text-xl font-bold">{loading ? '—' : formatCurrency(totals.totalAmount)}</p>
+            <p className="font-serif text-xl font-medium">{loading ? '—' : formatCurrency(totals.totalAmount)}</p>
           </CardContent>
         </Card>
       </div>

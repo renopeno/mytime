@@ -199,11 +199,16 @@ function KPICards({
   compareLoading: boolean
   compareMode: boolean
 }) {
-  const { totalMinutes, totalAmount, workingDays } = data
+  const { totalMinutes, totalAmount, workingDays, totalWorkingDays } = data
+
+  const activeRatio = totalWorkingDays > 0 ? Math.round((workingDays / totalWorkingDays) * 100) : 0
+  const compareActiveRatio = compareMode && compareData && compareData.totalWorkingDays > 0
+    ? Math.round((compareData.workingDays / compareData.totalWorkingDays) * 100)
+    : 0
 
   const minutesDelta = compareMode && compareData ? computeDelta(totalMinutes, compareData.totalMinutes) : null
   const amountDelta = compareMode && compareData ? computeDelta(totalAmount, compareData.totalAmount) : null
-  const daysDelta = compareMode && compareData ? computeDelta(workingDays, compareData.workingDays) : null
+  const daysDelta = compareMode && compareData ? computeDelta(activeRatio, compareActiveRatio) : null
 
   const avgHourlyRate = totalMinutes > 0 ? totalAmount / (totalMinutes / 60) : 0
   const compareAvgHourlyRate = compareMode && compareData && compareData.totalMinutes > 0
@@ -222,7 +227,7 @@ function KPICards({
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-bold">{formatHoursMinutes(totalMinutes)}</p>
+              <p className="font-serif text-2xl font-medium">{formatHoursMinutes(totalMinutes)}</p>
               {compareMode && !compareLoading && minutesDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(minutesDelta)}`}>{minutesDelta}</span>
               )}
@@ -240,7 +245,7 @@ function KPICards({
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-bold">{formatCurrency(totalAmount)}</p>
+              <p className="font-serif text-2xl font-medium">{formatCurrency(totalAmount)}</p>
               {compareMode && !compareLoading && amountDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(amountDelta)}`}>{amountDelta}</span>
               )}
@@ -251,14 +256,14 @@ function KPICards({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Working Days</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Days Active</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-bold">{workingDays}</p>
+              <p className="font-serif text-2xl font-medium">{activeRatio}%</p>
               {compareMode && !compareLoading && daysDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(daysDelta)}`}>{daysDelta}</span>
               )}
@@ -276,7 +281,7 @@ function KPICards({
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-bold">{formatCurrency(avgHourlyRate)}</p>
+              <p className="font-serif text-2xl font-medium">{formatCurrency(avgHourlyRate)}</p>
               {compareMode && !compareLoading && rateDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(rateDelta)}`}>{rateDelta}</span>
               )}
@@ -293,7 +298,7 @@ function KPICards({
 function LayeredRingChart({
   segments,
   size = 220,
-  strokeWidth = 30,
+  strokeWidth = 26,
   centerLabel,
   centerValue,
   activeIndex,
@@ -323,7 +328,8 @@ function LayeredRingChart({
     .filter((s) => s.value > 0)
     .map((seg, i) => {
       const fraction = seg.value / total
-      const arcLength = Math.max(0, (fraction - gapFraction) * circumference)
+      const minArc = strokeWidth * 2
+      const arcLength = Math.max(minArc, (fraction - gapFraction) * circumference)
       const offset = cumulativeOffset
       cumulativeOffset += fraction * circumference
       return {
@@ -350,8 +356,8 @@ function LayeredRingChart({
           className="text-muted/40"
           strokeWidth={strokeWidth * 0.6}
         />
-        {/* Segment arcs — each subsequent segment overlaps the previous one */}
-        {arcs.map((arc) => {
+        {/* Segment arcs — reversed: earlier segments on top, each END overlaps next START */}
+        {[...arcs].reverse().map((arc) => {
           const isSelected = activeIndex != null && activeIndex === arc.index
           return (
             <circle
@@ -366,8 +372,11 @@ function LayeredRingChart({
               strokeDashoffset={arc.dashOffset}
               strokeLinecap="round"
               transform={`rotate(-90 ${cx} ${cy})`}
-              style={{ filter: isSelected ? 'brightness(0.82)' : 'none' }}
-              className={onSegmentClick ? 'cursor-pointer transition-[filter] duration-200 hover:[filter:brightness(0.82)]' : 'transition-[filter] duration-200'}
+              className={[
+                'transition-[filter] duration-200',
+                isSelected ? '[filter:brightness(0.82)]' : '',
+                onSegmentClick ? 'cursor-pointer hover:[filter:brightness(0.82)]' : '',
+              ].join(' ')}
               onClick={() => onSegmentClick?.(arc.index)}
             />
           )
@@ -377,7 +386,7 @@ function LayeredRingChart({
       {(centerLabel || centerValue) && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           {centerLabel && <span className="text-xs text-muted-foreground transition-all duration-200">{centerLabel}</span>}
-          {centerValue && <span className="font-serif text-lg font-bold transition-all duration-200">{centerValue}</span>}
+          {centerValue && <span className="font-serif text-lg font-medium transition-all duration-200">{centerValue}</span>}
         </div>
       )}
     </div>
@@ -432,7 +441,7 @@ function BillingDonutChart({
                 centerLabel={activeSegment?.name ?? 'Total'}
                 centerValue={formatCurrency(activeSegment?.value ?? total)}
                 activeIndex={selectedIndex}
-                onSegmentClick={(i) => setSelectedIndex(i)}
+                onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
             {/* Legend — with percentages, click only */}
@@ -445,7 +454,7 @@ function BillingDonutChart({
                   <button
                     key={item.name}
                     className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
-                    onClick={() => segIdx >= 0 && setSelectedIndex(segIdx)}
+                    onClick={() => segIdx >= 0 && setSelectedIndex(prev => prev === segIdx ? null : segIdx)}
                   >
                     <span
                       className="inline-block h-3 w-3 shrink-0 rounded-full"
@@ -928,6 +937,7 @@ export default function ReportsPage() {
             totalMinutes: data.totalMinutes,
             totalAmount: data.totalAmount,
             workingDays: data.workingDays,
+            totalWorkingDays: data.totalWorkingDays,
             billingBreakdown: data.billingBreakdown,
           }}
           byProject={data.byProject}

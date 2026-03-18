@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog'
 import { ImportWizard } from '@/components/import/ImportWizard'
 
@@ -20,24 +18,23 @@ export default function SettingsPage() {
       <SettingsForm />
 
       {/* Import CSV section */}
-      <div className="space-y-3 rounded-lg border p-6">
-        <div>
+      <div className="flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10">
+        <div className="px-4">
           <h2 className="font-serif text-lg font-medium">Import CSV</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+        </div>
+        <div className="space-y-3 px-4">
+          <p className="text-sm text-muted-foreground">
             Import time entries from another time tracking tool (Toggl, Clockify, Harvest, or any CSV)
           </p>
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import CSV
+          </Button>
         </div>
-        <Button variant="outline" onClick={() => setImportOpen(true)}>
-          <Upload className="mr-2 h-4 w-4" />
-          Import CSV
-        </Button>
       </div>
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-xl">Import CSV</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-5xl flex max-h-[85vh] flex-col overflow-hidden">
           <ImportWizard onComplete={() => setImportOpen(false)} />
         </DialogContent>
       </Dialog>

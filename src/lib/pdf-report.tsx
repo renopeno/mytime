@@ -128,6 +128,7 @@ export interface ReportPDFProps {
     totalMinutes: number
     totalAmount: number
     workingDays: number
+    totalWorkingDays: number
     billingBreakdown: { notPaid: number; invoiceSent: number; paid: number }
   }
   byProject: Array<{ name: string; minutes: number; amount: number }>
@@ -168,7 +169,8 @@ function buildFiltersLine(filters: ReportPDFProps['filters']): string | null {
 
 export function ReportPDF({ dateRange, filters, summary, byProject, byClient, entries }: ReportPDFProps) {
   const filtersLine = buildFiltersLine(filters)
-  const { totalMinutes, totalAmount, workingDays, billingBreakdown } = summary
+  const { totalMinutes, totalAmount, workingDays, totalWorkingDays, billingBreakdown } = summary
+  const activeRatio = totalWorkingDays > 0 ? Math.round((workingDays / totalWorkingDays) * 100) : 0
   const generatedDate = format(new Date(), 'dd.MM.yyyy')
 
   return (
@@ -192,8 +194,8 @@ export function ReportPDF({ dateRange, filters, summary, byProject, byClient, en
             <Text style={styles.summaryValue}>{formatCurrency(totalAmount)}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Working Days</Text>
-            <Text style={styles.summaryValue}>{workingDays}</Text>
+            <Text style={styles.summaryLabel}>Days Active</Text>
+            <Text style={styles.summaryValue}>{activeRatio}%</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Billing</Text>
