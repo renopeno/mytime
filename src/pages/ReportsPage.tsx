@@ -353,9 +353,6 @@ function LayeredRingChart({
         {/* Segment arcs — each subsequent segment overlaps the previous one */}
         {arcs.map((arc) => {
           const isSelected = activeIndex != null && activeIndex === arc.index
-          // Default: normal. Hovered or selected: darker. Neither when something is selected: washed out.
-          const needsDarken = isSelected
-          const needsWash = activeIndex != null && !isSelected
           return (
             <circle
               key={arc.name}
@@ -369,11 +366,9 @@ function LayeredRingChart({
               strokeDashoffset={arc.dashOffset}
               strokeLinecap="round"
               transform={`rotate(-90 ${cx} ${cy})`}
-              style={{ filter: needsDarken ? 'brightness(0.85)' : needsWash ? 'brightness(1.3) saturate(0.5)' : 'none' }}
-              className={onSegmentClick ? 'cursor-pointer transition-[filter] duration-200 hover:brightness-85' : 'transition-[filter] duration-200'}
+              style={{ filter: isSelected ? 'brightness(0.82)' : 'none' }}
+              className={onSegmentClick ? 'cursor-pointer transition-[filter] duration-200 hover:[filter:brightness(0.82)]' : 'transition-[filter] duration-200'}
               onClick={() => onSegmentClick?.(arc.index)}
-              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.filter = 'brightness(0.85)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = needsDarken ? 'brightness(0.85)' : needsWash ? 'brightness(1.3) saturate(0.5)' : 'none' }}
             />
           )
         })}
