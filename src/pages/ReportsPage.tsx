@@ -26,19 +26,14 @@ import { formatCurrency } from '@/lib/format'
 import { getGroupingMode, groupEntries } from '@/lib/chart-utils'
 import type { GroupedDataPoint } from '@/lib/chart-utils'
 import {
-  BarChart,
-  Bar,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Legend,
-  Cell,
 } from 'recharts'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -294,40 +289,216 @@ function KPICards({
   )
 }
 
-// ─── Breakdown Chart (By Project / By Client) ───────────────────────────────
+// ─── Layered Ring Chart (SVG) ────────────────────────────────────────────────
 
-function BreakdownChart({
+function LayeredRingChart({
+  segments,
+  size = 220,
+  strokeWidth = 22,
+  centerLabel,
+  centerValue,
+}: {
+  segments: Array<{ name: string; value: number; color: string }>
+  size?: number
+  strokeWidth?: number
+  centerLabel?: string
+  centerValue?: string
+}) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const total = segments.reduce((sum, s) => sum + s.value, 0)
+  const cx = size / 2
+  const cy = size / 2
+  const gapAngleDeg = 3
+  const gapFraction = gapAngleDeg / 360
+
+  if (total === 0) return null
+
+  // Build arcs: each segment gets a fraction of the circumference, minus gap
+  let cumulativeOffset = 0
+  const arcs = segments
+    .filter((s) => s.value > 0)
+    .map((seg) => {
+      const fraction = seg.value / total
+      const arcLength = Math.max(0, (fraction - gapFraction) * circumference)
+      const offset = cumulativeOffset
+      cumulativeOffset += fraction * circumference
+      return {
+        ...seg,
+        arcLength,
+        dashOffset: -offset - (gapFraction / 2) * circumference,
+      }
+    })
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Background ring */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          className="text-muted/40"
+          strokeWidth={strokeWidth}
+        />
+        {/* Segment arcs */}
+        {arcs.map((arc) => (
+          <circle
+            key={arc.name}
+            cx={cx}
+            cy={cy}
+            r={radius}
+            fill="none"
+            stroke={arc.color}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${arc.arcLength} ${circumference - arc.arcLength}`}
+            strokeDashoffset={arc.dashOffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        ))}
+      </svg>
+      {/* Center text */}
+      {(centerLabel || centerValue) && (
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          {centerLabel && <span className="text-xs text-muted-foreground">{centerLabel}</span>}
+          {centerValue && <span className="font-serif text-lg font-bold">{centerValue}</span>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Billing Ring Chart ─────────────────────────────────────────────────────
+
+const BILLING_COLORS = {
+  notPaid: '#e1d4c0',
+  invoiceSent: '#fddd74',
+  paid: '#45825d',
+}
+
+function BillingDonutChart({
   data,
-  compareData,
   loading,
-  compareMode,
 }: {
   data: DashboardData
-  compareData: DashboardData | null
   loading: boolean
-  compareMode: boolean
+}) {
+  const { billingBreakdown } = data
+  const total = billingBreakdown.notPaid + billingBreakdown.invoiceSent + billingBreakdown.paid
+
+  const segments = useMemo(() => {
+    const result: Array<{ name: string; value: number; color: string }> = []
+    if (billingBreakdown.notPaid > 0) {
+      result.push({ name: 'Not Paid', value: Math.round(billingBreakdown.notPaid * 100) / 100, color: BILLING_COLORS.notPaid })
+    }
+    if (billingBreakdown.invoiceSent > 0) {
+      result.push({ name: 'Invoice Sent', value: Math.round(billingBreakdown.invoiceSent * 100) / 100, color: BILLING_COLORS.invoiceSent })
+    }
+    if (billingBreakdown.paid > 0) {
+      result.push({ name: 'Paid', value: Math.round(billingBreakdown.paid * 100) / 100, color: BILLING_COLORS.paid })
+    }
+    return result
+  }, [billingBreakdown])
+
+  if (loading) return <Skeleton className="h-[350px] w-full" />
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Billing Status</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {total === 0 ? (
+          <NoData />
+        ) : (
+          <div className="flex items-center gap-8">
+            <div className="shrink-0">
+              <LayeredRingChart
+                segments={segments}
+                centerLabel="Total"
+                centerValue={formatCurrency(total)}
+              />
+            </div>
+            {/* Legend */}
+            <div className="flex flex-col gap-3">
+              {[
+                { label: 'Not Paid', amount: billingBreakdown.notPaid, color: BILLING_COLORS.notPaid },
+                { label: 'Invoice Sent', amount: billingBreakdown.invoiceSent, color: BILLING_COLORS.invoiceSent },
+                { label: 'Paid', amount: billingBreakdown.paid, color: BILLING_COLORS.paid },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2.5">
+                  <span
+                    className="inline-block h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
+                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Earnings Donut Chart (By Project / By Client) ──────────────────────────
+
+const OTHER_THRESHOLD = 0.05
+
+function EarningsDonutChart({
+  data,
+  loading,
+}: {
+  data: DashboardData
+  loading: boolean
 }) {
   const [mode, setMode] = useState<BreakdownMode>('project')
 
-  const chartData = useMemo(() => {
+  const { segments, legendItems } = useMemo(() => {
     const items = mode === 'project' ? data.byProject : data.byClient
-    return items
+    const sorted = [...items]
       .map((item, index) => {
         const color = 'color' in item ? getColor(item.color as string | undefined, index) : getColor(undefined, index)
-        const row: Record<string, unknown> = {
+        return {
           name: item.name,
           amount: Math.round(item.amount * 100) / 100,
           color,
         }
-        if (compareMode && compareData) {
-          const compareItems = mode === 'project' ? compareData.byProject : compareData.byClient
-          const match = compareItems.find((c) => c.name === item.name)
-          row.compareAmount = match ? Math.round(match.amount * 100) / 100 : 0
-        }
-        return row
       })
-      .sort((a, b) => (b.amount as number) - (a.amount as number))
-  }, [mode, data, compareData, compareMode])
+      .sort((a, b) => b.amount - a.amount)
+
+    const total = sorted.reduce((sum, s) => sum + s.amount, 0)
+    if (total === 0) return { segments: [], legendItems: [] }
+
+    const main: Array<{ name: string; value: number; color: string }> = []
+    let otherAmount = 0
+    const legend: Array<{ name: string; amount: number; color: string }> = []
+
+    for (const item of sorted) {
+      if (item.amount / total < OTHER_THRESHOLD && sorted.length > 3) {
+        otherAmount += item.amount
+      } else {
+        main.push({ name: item.name, value: item.amount, color: item.color })
+        legend.push({ name: item.name, amount: item.amount, color: item.color })
+      }
+    }
+
+    if (otherAmount > 0) {
+      main.push({ name: 'Other', value: Math.round(otherAmount * 100) / 100, color: '#a0a0a0' })
+      legend.push({ name: 'Other', amount: Math.round(otherAmount * 100) / 100, color: '#a0a0a0' })
+    }
+
+    return { segments: main, legendItems: legend }
+  }, [mode, data.byProject, data.byClient])
+
+  const total = segments.reduce((sum, s) => sum + s.value, 0)
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
@@ -345,30 +516,33 @@ function BreakdownChart({
         />
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
+        {segments.length === 0 ? (
           <NoData />
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(200, chartData.length * 48)}>
-            <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} />
-              <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 13 }} />
-              <RechartsTooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
-              {compareMode && compareData ? (
-                <>
-                  <Bar dataKey="amount" name="Current" radius={[0, 4, 4, 0]} fill="#6366f1" />
-                  <Bar dataKey="compareAmount" name="Compare" radius={[0, 4, 4, 0]} fill="#6366f1" fillOpacity={0.3} />
-                  <Legend />
-                </>
-              ) : (
-                <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
-                  {chartData.map((entry) => (
-                    <Cell key={entry.name as string} fill={entry.color as string} />
-                  ))}
-                </Bar>
-              )}
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="flex items-center gap-8">
+            <div className="shrink-0">
+              <LayeredRingChart
+                segments={segments}
+                centerLabel="Total"
+                centerValue={formatCurrency(total)}
+              />
+            </div>
+            {/* Legend */}
+            <div className="flex flex-col gap-2.5 min-w-0 flex-1">
+              {legendItems.map((item) => (
+                <div key={item.name} className="flex items-center gap-2.5">
+                  <span
+                    className="inline-block h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -497,103 +671,6 @@ function TrendChart({
   )
 }
 
-// ─── Billing Donut Chart ─────────────────────────────────────────────────────
-
-const BILLING_COLORS = {
-  notPaid: '#ef4444',
-  invoiceSent: '#f59e0b',
-  paid: '#10b981',
-}
-
-function BillingDonutChart({
-  data,
-  loading,
-}: {
-  data: DashboardData
-  loading: boolean
-}) {
-  const { billingBreakdown } = data
-  const total = billingBreakdown.notPaid + billingBreakdown.invoiceSent + billingBreakdown.paid
-
-  const chartData = useMemo(() => {
-    const segments: Array<{ name: string; value: number; color: string }> = []
-    if (billingBreakdown.notPaid > 0) {
-      segments.push({ name: 'Not Paid', value: Math.round(billingBreakdown.notPaid * 100) / 100, color: BILLING_COLORS.notPaid })
-    }
-    if (billingBreakdown.invoiceSent > 0) {
-      segments.push({ name: 'Invoice Sent', value: Math.round(billingBreakdown.invoiceSent * 100) / 100, color: BILLING_COLORS.invoiceSent })
-    }
-    if (billingBreakdown.paid > 0) {
-      segments.push({ name: 'Paid', value: Math.round(billingBreakdown.paid * 100) / 100, color: BILLING_COLORS.paid })
-    }
-    return segments
-  }, [billingBreakdown])
-
-  if (loading) return <Skeleton className="h-[350px] w-full" />
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Billing Status</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {total === 0 ? (
-          <NoData />
-        ) : (
-          <div className="flex items-center gap-8">
-            <div className="relative h-[220px] w-[220px] shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={68}
-                    outerRadius={100}
-                    paddingAngle={4}
-                    dataKey="value"
-                    strokeLinecap="round"
-                    stroke="none"
-                  >
-                    {chartData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center text */}
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xs text-muted-foreground">Total</span>
-                <span className="font-serif text-lg font-bold">{formatCurrency(total)}</span>
-              </div>
-            </div>
-            {/* Legend */}
-            <div className="flex flex-col gap-3">
-              {[
-                { label: 'Not Paid', amount: billingBreakdown.notPaid, color: BILLING_COLORS.notPaid },
-                { label: 'Invoice Sent', amount: billingBreakdown.invoiceSent, color: BILLING_COLORS.invoiceSent },
-                { label: 'Paid', amount: billingBreakdown.paid, color: BILLING_COLORS.paid },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2.5">
-                  <span
-                    className="inline-block h-3 w-3 shrink-0 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                    <span className="text-sm font-semibold">{formatCurrency(item.amount)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
 function NoData() {
@@ -652,80 +729,82 @@ function TimeEntriesTable({
         <span className="text-sm text-muted-foreground">({sortedEntries.length})</span>
       </div>
 
-      {isMobile ? (
-        <div className="space-y-2">
-          {visibleEntries.map((entry, i) => {
-            const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
-            return (
-              <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    {entry.projectName ? (
-                      <span className="flex items-center gap-1.5 text-sm font-medium">
-                        <span
-                          className="inline-block h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: color || '#6366f1' }}
-                        />
-                        <span className="truncate">{entry.projectName}</span>
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">No project</span>
-                    )}
-                    <span className="text-xs text-muted-foreground">{formatShortDate(entry.date)}</span>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="block text-sm font-semibold">{formatDurationHMM(entry.durationMinutes)}</span>
-                    <span className="block text-xs text-muted-foreground/60">{formatCurrency(entry.amount)}</span>
-                  </div>
-                </div>
-                {entry.description && (
-                  <p className="text-sm text-muted-foreground truncate">{entry.description}</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[72px]">Date</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[72px] text-right">Duration</TableHead>
-              <TableHead className="w-[96px] text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="rounded-lg border bg-card">
+        {isMobile ? (
+          <div className="divide-y divide-border">
             {visibleEntries.map((entry, i) => {
               const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
               return (
-                <TableRow key={i}>
-                  <TableCell className="text-sm text-muted-foreground">{formatShortDate(entry.date)}</TableCell>
-                  <TableCell>
-                    {entry.projectName ? (
-                      <span className="flex items-center gap-1.5 text-sm">
-                        <span
-                          className="inline-block h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: color || '#6366f1' }}
-                        />
-                        <span className="truncate">{entry.projectName}</span>
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
-                  <TableCell className="max-w-[300px] truncate text-sm">{entry.description || <span className="italic text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-right text-sm">{formatDurationHMM(entry.durationMinutes)}</TableCell>
-                  <TableCell className="text-right text-sm text-muted-foreground/60">{formatCurrency(entry.amount)}</TableCell>
-                </TableRow>
+                <div key={i} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      {entry.projectName ? (
+                        <span className="flex items-center gap-1.5 text-sm font-medium">
+                          <span
+                            className="inline-block h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: color || '#6366f1' }}
+                          />
+                          <span className="truncate">{entry.projectName}</span>
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No project</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">{formatShortDate(entry.date)}</span>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span className="block text-sm font-semibold">{formatDurationHMM(entry.durationMinutes)}</span>
+                      <span className="block text-xs text-muted-foreground/60">{formatCurrency(entry.amount)}</span>
+                    </div>
+                  </div>
+                  {entry.description && (
+                    <p className="text-sm text-muted-foreground truncate">{entry.description}</p>
+                  )}
+                </div>
               )
             })}
-          </TableBody>
-        </Table>
-      )}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[72px]">Date</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[72px] text-right">Duration</TableHead>
+                <TableHead className="w-[96px] text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleEntries.map((entry, i) => {
+                const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
+                return (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm text-muted-foreground">{formatShortDate(entry.date)}</TableCell>
+                    <TableCell>
+                      {entry.projectName ? (
+                        <span className="flex items-center gap-1.5 text-sm">
+                          <span
+                            className="inline-block h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: color || '#6366f1' }}
+                          />
+                          <span className="truncate">{entry.projectName}</span>
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{entry.clientName ?? '-'}</TableCell>
+                    <TableCell className="max-w-[300px] truncate text-sm">{entry.description || <span className="italic text-muted-foreground">-</span>}</TableCell>
+                    <TableCell className="text-right text-sm">{formatDurationHMM(entry.durationMinutes)}</TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground/60">{formatCurrency(entry.amount)}</TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </div>
 
       {hasMore && (
         <div className="flex justify-center pt-1">
@@ -886,9 +965,9 @@ export default function ReportsPage() {
         <MultiSelectFilter
           label="statuses"
           items={[
-            { id: 'not_paid', name: 'Not Paid', color: '#ef4444' },
-            { id: 'invoice_sent', name: 'Invoice Sent', color: '#f59e0b' },
-            { id: 'paid', name: 'Paid', color: '#10b981' },
+            { id: 'not_paid', name: 'Not Paid', color: '#e1d4c0' },
+            { id: 'invoice_sent', name: 'Invoice Sent', color: '#fddd74' },
+            { id: 'paid', name: 'Paid', color: '#45825d' },
           ]}
           selectedIds={selectedBillingStatuses}
           onSelectionChange={(ids) => setSelectedBillingStatuses(ids as BillingStatusValue[])}
@@ -913,24 +992,21 @@ export default function ReportsPage() {
         compareMode={compareMode}
       />
 
-      {/* Charts row */}
+      {/* Row 1: Billing + Earnings donuts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <BreakdownChart
-          data={data}
-          compareData={compareMode ? compareData : null}
-          loading={data.isLoading}
-          compareMode={compareMode}
-        />
-        <TrendChart
-          data={data}
-          compareData={compareMode ? compareData : null}
-          dateRange={dateRange}
-          compareDateRange={compareMode ? compareDateRange : null}
-          loading={data.isLoading}
-          compareMode={compareMode}
-        />
         <BillingDonutChart data={data} loading={data.isLoading} />
+        <EarningsDonutChart data={data} loading={data.isLoading} />
       </div>
+
+      {/* Row 2: Trend chart (full width) */}
+      <TrendChart
+        data={data}
+        compareData={compareMode ? compareData : null}
+        dateRange={dateRange}
+        compareDateRange={compareMode ? compareDateRange : null}
+        loading={data.isLoading}
+        compareMode={compareMode}
+      />
 
       {/* Time Entries */}
       <TimeEntriesTable data={data} loading={data.isLoading} />
