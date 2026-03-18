@@ -410,9 +410,7 @@ function BillingDonutChart({
 
   const segments = useMemo(() => allStatuses.filter(s => s.value > 0), [allStatuses])
 
-  // Default selected: Not Paid — click only, no hover
-  const defaultIndex = segments.findIndex(s => s.name === 'Not Paid')
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(defaultIndex >= 0 ? defaultIndex : 0)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   const activeSegment = selectedIndex != null ? segments[selectedIndex] : null
 
