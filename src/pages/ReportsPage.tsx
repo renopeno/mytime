@@ -342,8 +342,8 @@ function LayeredRingChart({
           className="text-muted/40"
           strokeWidth={strokeWidth * 0.6}
         />
-        {/* Segment arcs */}
-        {arcs.map((arc) => (
+        {/* Segment arcs — reversed so first segment renders last (on top) */}
+        {[...arcs].reverse().map((arc) => (
           <circle
             key={arc.name}
             cx={cx}
