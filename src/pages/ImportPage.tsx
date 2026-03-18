@@ -1,8 +1,9 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Upload, FileText, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableHeader,
@@ -11,6 +12,13 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select'
 import {
   parseCSVText,
   detectFormat,
@@ -24,6 +32,8 @@ import type {
   ProjectSummary,
 } from '@/lib/csv-import'
 import { formatDuration } from '@/lib/duration'
+import { formatCurrency } from '@/lib/format'
+import { useProjects } from '@/hooks/useProjects'
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -409,10 +419,289 @@ function PreviewStep({
   )
 }
 
-function MappingStep() {
+// ---------------------------------------------------------------------------
+// Mapping row state
+// ---------------------------------------------------------------------------
+
+type MappingAction = 'create_new' | string // string = existing project ID
+
+interface MappingRowState {
+  action: MappingAction
+  clientName: string
+  projectName: string
+  hourlyRate: number | null
+}
+
+// ---------------------------------------------------------------------------
+// Inline editable cell
+// ---------------------------------------------------------------------------
+
+function EditableCell({
+  value,
+  onChange,
+  className = '',
+  placeholder = '',
+  type = 'text',
+}: {
+  value: string
+  onChange: (value: string) => void
+  className?: string
+  placeholder?: string
+  type?: 'text' | 'number'
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+  }, [isEditing])
+
+  const commit = () => {
+    setIsEditing(false)
+    const trimmed = draft.trim()
+    if (type === 'number') {
+      const num = parseFloat(trimmed)
+      onChange(isNaN(num) ? '' : String(num))
+    } else {
+      onChange(trimmed)
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <Input
+        ref={inputRef}
+        type={type}
+        step={type === 'number' ? '0.01' : undefined}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+          if (e.key === 'Escape') {
+            setDraft(value)
+            setIsEditing(false)
+          }
+        }}
+        className="h-7 w-full min-w-[80px] text-sm"
+        placeholder={placeholder}
+      />
+    )
+  }
+
   return (
-    <div className="flex items-center justify-center py-12 text-muted-foreground">
-      Mapping step — coming soon
+    <button
+      type="button"
+      onClick={() => setIsEditing(true)}
+      className={`inline-block w-full cursor-text rounded px-1.5 py-0.5 text-left text-sm hover:bg-muted/60 ${className}`}
+      title="Click to edit"
+    >
+      {value || <span className="text-muted-foreground">{placeholder || '—'}</span>}
+    </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Mapping step
+// ---------------------------------------------------------------------------
+
+function MappingStep({
+  summaries,
+  onBack,
+  onNext,
+  onUpdateSummaries,
+}: {
+  summaries: ProjectSummary[]
+  onBack: () => void
+  onNext: () => void
+  onUpdateSummaries: (summaries: ProjectSummary[]) => void
+}) {
+  const { projects } = useProjects()
+
+  // Local mapping state — one per summary row
+  const [mappings, setMappings] = useState<MappingRowState[]>(() =>
+    summaries.map((s) => ({
+      action: 'create_new',
+      clientName: s.clientName,
+      projectName: s.projectName,
+      hourlyRate: s.calculatedRate,
+    })),
+  )
+
+  const updateRow = (index: number, patch: Partial<MappingRowState>) => {
+    setMappings((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], ...patch }
+      return next
+    })
+  }
+
+  const handleActionChange = (index: number, value: string) => {
+    if (value === 'create_new') {
+      // Reset to original summary names
+      updateRow(index, {
+        action: 'create_new',
+        clientName: summaries[index].clientName,
+        projectName: summaries[index].projectName,
+      })
+    } else {
+      // Map to existing project
+      const existingProject = projects.find((p) => p.id === value)
+      if (existingProject) {
+        updateRow(index, {
+          action: value,
+          clientName: existingProject.client?.name ?? '',
+          projectName: existingProject.name,
+          hourlyRate: existingProject.hourly_rate ?? mappings[index].hourlyRate,
+        })
+      }
+    }
+  }
+
+  const handleNext = () => {
+    // Sync mapping edits back into summaries
+    const updated = summaries.map((s, i) => ({
+      ...s,
+      clientName: mappings[i].clientName,
+      projectName: mappings[i].projectName,
+      calculatedRate: mappings[i].hourlyRate,
+    }))
+    onUpdateSummaries(updated)
+    onNext()
+  }
+
+  const formatHours = (minutes: number) => {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    if (m === 0) return `${h}h`
+    return `${h}h ${m}m`
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="font-serif text-xl font-medium">Map Projects &amp; Clients</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review detected projects. Rename, set rates, or map to existing projects.
+        </p>
+      </div>
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Client</TableHead>
+              <TableHead>Project</TableHead>
+              <TableHead className="text-right">Rate</TableHead>
+              <TableHead className="text-right">Hours</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {mappings.map((row, i) => {
+              const summary = summaries[i]
+              const isMapped = row.action !== 'create_new'
+
+              return (
+                <TableRow key={i}>
+                  <TableCell>
+                    {isMapped ? (
+                      <span className="text-sm text-muted-foreground">{row.clientName || '—'}</span>
+                    ) : (
+                      <EditableCell
+                        value={row.clientName}
+                        onChange={(v) => updateRow(i, { clientName: v })}
+                        placeholder="No client"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isMapped ? (
+                      <span className="text-sm">{row.projectName}</span>
+                    ) : (
+                      <EditableCell
+                        value={row.projectName}
+                        onChange={(v) => updateRow(i, { projectName: v })}
+                        placeholder="Unnamed project"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <EditableCell
+                      value={row.hourlyRate != null ? String(row.hourlyRate) : ''}
+                      onChange={(v) => {
+                        const num = parseFloat(v)
+                        updateRow(i, { hourlyRate: isNaN(num) ? null : num })
+                      }}
+                      placeholder="—"
+                      type="number"
+                      className="text-right"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {formatHours(summary.totalMinutes)}
+                  </TableCell>
+                  <TableCell className="text-right text-sm">
+                    {summary.totalAmount != null
+                      ? formatCurrency(summary.totalAmount)
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={row.action}
+                      onValueChange={(v) => handleActionChange(i, v)}
+                    >
+                      <SelectTrigger className="h-8 w-[180px] text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="create_new">Create new</SelectItem>
+                        {projects.length > 0 && (
+                          <>
+                            {projects.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name}{p.client ? ` (${p.client.name})` : ''}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-muted-foreground">
+          Click on client name, project name, or rate to edit inline.
+          Use the Action dropdown to map to an existing project instead of creating a new one.
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <Button onClick={handleNext}>
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -504,7 +793,17 @@ export default function ImportPage() {
               }}
             />
           )}
-          {step === 'mapping' && <MappingStep />}
+          {step === 'mapping' && (
+            <MappingStep
+              summaries={summaries}
+              onBack={() => setStep('preview')}
+              onNext={() => {
+                setCompletedSteps((prev) => new Set([...prev, 'mapping']))
+                setStep('import')
+              }}
+              onUpdateSummaries={setSummaries}
+            />
+          )}
           {step === 'import' && <ImportStep />}
         </CardContent>
       </Card>
