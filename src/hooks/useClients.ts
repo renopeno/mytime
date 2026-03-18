@@ -30,10 +30,10 @@ export function useClients() {
 
   useEffect(() => { fetchClients() }, [fetchClients])
 
-  const createClient = async (client: { name: string; email?: string; address?: string; notes?: string; color?: string; hourly_rate?: number | null }) => {
+  const createClient = async (client: { name: string; hourly_rate?: number | null }) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
-      const data = devCreateClient({ ...client, user_id: user.id, email: client.email ?? null, address: client.address ?? null, notes: client.notes ?? null, color: client.color ?? '#6b7280', hourly_rate: client.hourly_rate ?? null, is_active: true })
+      const data = devCreateClient({ ...client, user_id: user.id, hourly_rate: client.hourly_rate ?? null, is_active: true })
       await fetchClients()
       return { data, error: null }
     }
@@ -46,7 +46,7 @@ export function useClients() {
     return { data, error }
   }
 
-  const updateClient = async (id: string, updates: Partial<Pick<Client, 'name' | 'email' | 'address' | 'notes' | 'color' | 'hourly_rate' | 'is_active'>>) => {
+  const updateClient = async (id: string, updates: Partial<Pick<Client, 'name' | 'hourly_rate' | 'is_active'>>) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
       devUpdateClient(id, updates)

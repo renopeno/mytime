@@ -90,10 +90,6 @@ export interface Database {
           id: string
           user_id: string
           name: string
-          email: string | null
-          address: string | null
-          notes: string | null
-          color: string
           hourly_rate: number | null
           is_active: boolean
           created_at: string
@@ -103,10 +99,6 @@ export interface Database {
           id?: string
           user_id: string
           name: string
-          email?: string | null
-          address?: string | null
-          notes?: string | null
-          color?: string
           hourly_rate?: number | null
           is_active?: boolean
           created_at?: string
@@ -116,10 +108,6 @@ export interface Database {
           id?: string
           user_id?: string
           name?: string
-          email?: string | null
-          address?: string | null
-          notes?: string | null
-          color?: string
           hourly_rate?: number | null
           is_active?: boolean
           created_at?: string
@@ -143,8 +131,10 @@ export interface Database {
           name: string
           description: string | null
           color: string
+          type: string
           is_archived: boolean
           hourly_rate: number | null
+          estimated_hours: number | null
           created_at: string
           updated_at: string
         }
@@ -155,8 +145,10 @@ export interface Database {
           name: string
           description?: string | null
           color?: string
+          type?: string
           is_archived?: boolean
           hourly_rate?: number | null
+          estimated_hours?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -167,8 +159,10 @@ export interface Database {
           name?: string
           description?: string | null
           color?: string
+          type?: string
           is_archived?: boolean
           hourly_rate?: number | null
+          estimated_hours?: number | null
           created_at?: string
           updated_at?: string
         }

@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v5'
+const DEV_DB_VERSION = 'v6'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -51,9 +51,9 @@ function buildSeed() {
   const pWeb = uid(), pEcom = uid(), pMvp = uid(), pBrand = uid(), pInternal = uid()
 
   const clients: Client[] = [
-    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',   address: 'Ilica 10, Zagreb',     notes: null, hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',     address: null,                   notes: null, hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',   address: null,                   notes: 'Prijatelj, bez rate-a', hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
+    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',   hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',     hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',   hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
   ]
 
   const projects: Project[] = [
