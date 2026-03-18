@@ -1,8 +1,16 @@
 import { useState, useCallback, useRef } from 'react'
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Upload, FileText, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table'
 import {
   parseCSVText,
   detectFormat,
@@ -15,6 +23,7 @@ import type {
   ParsedTimeEntry,
   ProjectSummary,
 } from '@/lib/csv-import'
+import { formatDuration } from '@/lib/duration'
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -262,10 +271,140 @@ function UploadStep({
 // Placeholder steps (Tasks 3, 4, 5)
 // ---------------------------------------------------------------------------
 
-function PreviewStep() {
+const FORMAT_LABELS: Record<DetectedFormat['name'], string> = {
+  toggl: 'Toggl Track',
+  clockify: 'Clockify',
+  harvest: 'Harvest',
+  unknown: 'Unknown format',
+}
+
+function BillingStatusBadge({ isPaid, isInvoiced }: { isPaid: boolean | null; isInvoiced: boolean | null }) {
+  if (isPaid === true) {
+    return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Paid</Badge>
+  }
+  if (isInvoiced === true) {
+    return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">Invoice Sent</Badge>
+  }
+  if (isPaid === false) {
+    return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Not Paid</Badge>
+  }
+  return <span className="text-muted-foreground">—</span>
+}
+
+function PreviewStep({
+  csvData,
+  format,
+  entries,
+  fileName,
+  onBack,
+  onNext,
+}: {
+  csvData: ParsedCSV
+  format: DetectedFormat
+  entries: ParsedTimeEntry[]
+  fileName: string
+  onBack: () => void
+  onNext: () => void
+}) {
+  const previewEntries = entries.slice(0, 5)
+  const isKnownFormat = format.name !== 'unknown'
+
+  // Check if any entries have billing info
+  const hasBillingTags = entries.some(
+    (e) => e.isPaid !== null || e.isInvoiced !== null,
+  )
+
   return (
-    <div className="flex items-center justify-center py-12 text-muted-foreground">
-      Preview step — coming soon
+    <div className="space-y-6">
+      {/* Header with format badge and file info */}
+      <div className="text-center">
+        <h2 className="font-serif text-xl font-medium">Preview</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review the parsed data before proceeding.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Badge variant={isKnownFormat ? 'default' : 'secondary'} className="gap-1.5">
+          {isKnownFormat ? (
+            <CheckCircle2 className="h-3 w-3" />
+          ) : (
+            <AlertCircle className="h-3 w-3" />
+          )}
+          {FORMAT_LABELS[format.name]}{isKnownFormat ? ' \u2713' : ''}
+        </Badge>
+        <Badge variant="outline" className="gap-1.5">
+          <FileText className="h-3 w-3" />
+          {fileName}
+        </Badge>
+        <Badge variant="outline">
+          {csvData.rows.length} {csvData.rows.length === 1 ? 'row' : 'rows'} total
+        </Badge>
+      </div>
+
+      {/* Preview table */}
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Project</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="text-right">Duration</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {previewEntries.map((entry, i) => (
+              <TableRow key={i}>
+                <TableCell className="font-medium">{entry.date}</TableCell>
+                <TableCell>{entry.projectName || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{entry.clientName || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell className="max-w-[200px] truncate" title={entry.description}>
+                  {entry.description || <span className="text-muted-foreground">—</span>}
+                </TableCell>
+                <TableCell className="text-right font-mono text-sm">
+                  {formatDuration(entry.durationMinutes)}
+                </TableCell>
+                <TableCell>
+                  <BillingStatusBadge isPaid={entry.isPaid} isInvoiced={entry.isInvoiced} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {entries.length > 5 && (
+          <div className="border-t px-4 py-2 text-center text-xs text-muted-foreground">
+            Showing first 5 of {entries.length} entries
+          </div>
+        )}
+      </div>
+
+      {/* Tag detection summary */}
+      {hasBillingTags && (
+        <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="text-muted-foreground">
+            Prepoznati billing tagovi: <span className="font-medium text-foreground">paid</span>,{' '}
+            <span className="font-medium text-foreground">not paid</span>,{' '}
+            <span className="font-medium text-foreground">invoice sent</span>{' '}
+            &rarr; automatski mapirani na status
+          </span>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <Button onClick={onNext}>
+          Next
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -352,7 +491,19 @@ export default function ImportPage() {
               setError={setError}
             />
           )}
-          {step === 'preview' && <PreviewStep />}
+          {step === 'preview' && csvData && format && fileName && (
+            <PreviewStep
+              csvData={csvData}
+              format={format}
+              entries={entries}
+              fileName={fileName}
+              onBack={() => setStep('upload')}
+              onNext={() => {
+                setCompletedSteps((prev) => new Set([...prev, 'preview']))
+                setStep('mapping')
+              }}
+            />
+          )}
           {step === 'mapping' && <MappingStep />}
           {step === 'import' && <ImportStep />}
         </CardContent>
