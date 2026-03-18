@@ -1,12 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import {
@@ -25,18 +23,21 @@ import {
   FormDescription,
   FormMessage,
 } from '@/components/ui/form'
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
 import { ClientSelect } from '@/components/clients/ClientSelect'
 import { ColorSwatchPicker } from '@/components/ui/color-swatch-picker'
 import { useProjects } from '@/hooks/useProjects'
-import { useClients } from '@/hooks/useClients'
+import { PROJECT_TYPES, getProjectTypeLabel } from '@/types/app.types'
 import type { ProjectWithClient } from '@/types/app.types'
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  client_id: z.string().nullable(),
+  client_id: z.string().min(1, 'Client is required'),
   description: z.string(),
   color: z.string(),
+  type: z.string().min(1, 'Type is required'),
   hourly_rate: z.number().nullable(),
+  estimated_hours: z.number().nullable(),
   is_archived: z.boolean(),
 })
 
@@ -52,61 +53,50 @@ interface ProjectFormProps {
 export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectFormProps) {
   const isEditing = !!project
   const { createProject, updateProject } = useProjects()
-  const { clients } = useClients()
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       name: '',
-      client_id: null,
+      client_id: '',
       description: '',
       color: '#6366f1',
+      type: 'web_design',
       hourly_rate: null,
+      estimated_hours: null,
       is_archived: false,
     },
   })
-
-  const userOverrodeColor = useRef(false)
-  const watchedClientId = useWatch({ control: form.control, name: 'client_id' })
 
   useEffect(() => {
     if (open) {
       if (project) {
         form.reset({
           name: project.name,
-          client_id: project.client_id,
+          client_id: project.client_id ?? '',
           description: project.description ?? '',
           color: project.color,
+          type: project.type ?? 'web_design',
           hourly_rate: project.hourly_rate,
+          estimated_hours: project.estimated_hours,
           is_archived: project.is_archived,
         })
-        // Edit mode: don't overwrite the project's existing color
-        userOverrodeColor.current = true
       } else {
         form.reset({
           name: '',
-          client_id: null,
+          client_id: '',
           description: '',
           color: '#6366f1',
+          type: 'web_design',
           hourly_rate: null,
+          estimated_hours: null,
           is_archived: false,
         })
-        // New project: allow auto-set from client color
-        userOverrodeColor.current = false
       }
     }
   }, [open, project, form])
 
-  // Auto-inherit color from selected client (new projects only)
-  useEffect(() => {
-    if (userOverrodeColor.current) return
-    if (watchedClientId) {
-      const client = clients.find((c) => c.id === watchedClientId)
-      if (client?.color) {
-        form.setValue('color', client.color, { shouldDirty: false })
-      }
-    }
-  }, [watchedClientId, clients, form])
+
 
   async function handleSubmit(values: ProjectFormValues) {
     if (isEditing && project) {
@@ -115,7 +105,9 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         client_id: values.client_id,
         description: values.description,
         color: values.color,
+        type: values.type,
         hourly_rate: values.hourly_rate,
+        estimated_hours: values.estimated_hours,
         is_archived: values.is_archived,
       })
       if (error) {
@@ -129,7 +121,9 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         client_id: values.client_id,
         description: values.description,
         color: values.color,
+        type: values.type,
         hourly_rate: values.hourly_rate,
+        estimated_hours: values.estimated_hours,
       })
       if (error) {
         toast.error('Failed to create project')
@@ -143,108 +137,147 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Project' : 'Add Project'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Project name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="client_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Client</FormLabel>
-                  <FormControl>
-                    <ClientSelect
-                      value={field.value ?? ''}
-                      onValueChange={(val) => field.onChange(val || null)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Project description"
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <ColorSwatchPicker
-                      value={field.value}
-                      onChange={(color) => {
-                        userOverrodeColor.current = true
-                        field.onChange(color)
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hourly_rate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hourly Rate (EUR)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Uses default rate"
-                      value={field.value ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        field.onChange(val === '' ? null : parseFloat(val))
-                      }}
-                    />
-                  </FormControl>
-                  {!field.value && (
-                    <FormDescription>Uses client or default rate</FormDescription>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {/* General */}
+            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
+              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+                <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">General</p>
+              </div>
+              <div className="space-y-6 p-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Project name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                />
+                <FormField
+                  control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client</FormLabel>
+                      <FormControl>
+                        <ClientSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <span className="flex flex-1 text-left text-sm">{getProjectTypeLabel(field.value)}</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PROJECT_TYPES.map((pt) => (
+                              <SelectItem key={pt.value} value={pt.value}>
+                                {pt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <FormControl>
+                        <ColorSwatchPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Billing & budget */}
+            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
+              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+                <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">Billing &amp; Budget</p>
+              </div>
+              <div className="space-y-6 p-6">
+                <FormField
+                  control={form.control}
+                  name="hourly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hourly Rate (EUR)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Uses default rate"
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            field.onChange(val === '' ? null : parseFloat(val))
+                          }}
+                        />
+                      </FormControl>
+                      {!field.value && (
+                        <FormDescription>Uses client or default rate</FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="estimated_hours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated hours</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          placeholder="No estimate"
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            field.onChange(val === '' ? null : parseFloat(val))
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {isEditing && (
               <FormField

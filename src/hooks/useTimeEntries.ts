@@ -114,12 +114,13 @@ export function useTimeEntries(options: FetchOptions = {}) {
   }
 
   const bulkUpdatePaid = async (ids: string[], isPaid: boolean) => {
+    const updates = isPaid ? { is_paid: true, is_invoiced: true } : { is_paid: false }
     if (DEV) {
-      devBulkUpdateTimeEntries(ids, { is_paid: isPaid })
+      devBulkUpdateTimeEntries(ids, updates)
       await fetchEntries()
       return { error: null }
     }
-    const { error } = await supabase.from('time_entries').update({ is_paid: isPaid }).in('id', ids)
+    const { error } = await supabase.from('time_entries').update(updates).in('id', ids)
     if (!error) await fetchEntries()
     return { error }
   }

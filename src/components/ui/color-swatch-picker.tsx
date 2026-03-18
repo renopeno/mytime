@@ -37,14 +37,14 @@ export function ColorSwatchPicker({ value, onChange, className }: ColorSwatchPic
             aria-pressed={isSelected}
             onClick={() => onChange(hex)}
             className={cn(
-              'relative h-7 w-7 rounded-full transition-all',
+              'relative h-5 w-5 rounded-full transition-all',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               isSelected && 'ring-2 ring-offset-2 ring-foreground/50'
             )}
             style={{ backgroundColor: hex }}
           >
             {isSelected && (
-              <CheckIcon className="absolute inset-0 m-auto h-3.5 w-3.5 text-white drop-shadow-sm" />
+              <CheckIcon className="absolute inset-0 m-auto h-3 w-3 text-white drop-shadow-sm" />
             )}
           </button>
         )

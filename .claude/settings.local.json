@@ -11,7 +11,19 @@
       "Bash(test -d /Users/renopeno/Desktop/MyTimeTracker/.claude/worktrees/friendly-nightingale/node_modules)",
       "WebFetch(domain:atmos.style)",
       "Bash(npm uninstall @fontsource-variable/geist)",
-      "Bash(npm install @fontsource-variable/inter)"
+      "Bash(npm install @fontsource-variable/inter)",
+      "Bash(claude mcp add --transport http figma-desktop http://127.0.0.1:3845/mcp)",
+      "Bash(open \"http://localhost:5173/#figmacapture=b3caa931-b362-4560-b840-2c0622b73c7d&figmaendpoint=https%3A%2F%2Fmcp.figma.com%2Fmcp%2Fcapture%2Fb3caa931-b362-4560-b840-2c0622b73c7d%2Fsubmit&figmadelay=3000\")",
+      "mcp__figma__generate_figma_design",
+      "Bash(open \"http://localhost:5173/#figmacapture=0a2285a4-5be5-4d45-b9b6-9e1dcc82ab58&figmaendpoint=https%3A%2F%2Fmcp.figma.com%2Fmcp%2Fcapture%2F0a2285a4-5be5-4d45-b9b6-9e1dcc82ab58%2Fsubmit&figmadelay=5000\")",
+      "Bash(lsof -i :5173 2>/dev/null | head -5)",
+      "Bash(npm run dev)",
+      "Bash(sleep 3 && lsof -i :5173 2>/dev/null | head -3)",
+      "Bash(open \"http://localhost:5173/#figmacapture&figmadelay=2000\")",
+      "Bash(open \"http://localhost:5173/projects#figmacapture&figmaselector=*\")",
+      "Bash(open -na \"Google Chrome\" --args --new-tab \"http://localhost:5173/projects#figmacapture&figmaselector=*\")",
+      "WebFetch(domain:supabase.com)",
+      "mcp__65322943-3cba-485c-8b8e-9172b9e8f2f4__execute_sql"
     ]
   }
 }

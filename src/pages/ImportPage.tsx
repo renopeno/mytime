@@ -665,7 +665,7 @@ function MappingStep({
                   <p className="text-xs text-muted-foreground mb-1">Action</p>
                   <Select
                     value={row.action}
-                    onValueChange={(v) => handleActionChange(i, v)}
+                    onValueChange={(v) => v && handleActionChange(i, v)}
                   >
                     <SelectTrigger className="h-8 w-full text-sm">
                       <SelectValue />
@@ -754,7 +754,7 @@ function MappingStep({
                     <TableCell>
                       <Select
                         value={row.action}
-                        onValueChange={(v) => handleActionChange(i, v)}
+                        onValueChange={(v) => v && handleActionChange(i, v)}
                       >
                         <SelectTrigger className="h-8 w-[180px] text-sm">
                           <SelectValue />

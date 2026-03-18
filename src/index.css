@@ -68,14 +68,19 @@
     --radius: 0.625rem;
 
     /* Sidebar */
-    --sidebar: oklch(0.93 0.012 70);
+    --sidebar: oklch(0.91 0.013 70);
     --sidebar-foreground: oklch(0.18 0.005 70);
     --sidebar-primary: oklch(0.36 0.05 163);
     --sidebar-primary-foreground: oklch(0.98 0.006 70);
-    --sidebar-accent: oklch(0.90 0.015 70);
+    --sidebar-accent: oklch(0.86 0.017 70);
     --sidebar-accent-foreground: oklch(0.18 0.005 70);
-    --sidebar-border: oklch(0.88 0.015 70);
+    --sidebar-border: oklch(0.83 0.017 70);
     --sidebar-ring: oklch(0.58 0.05 163);
+
+    /* Status colors (from Figma) */
+    --status-paid: #45825d;
+    --status-invoiced: #fddd74;
+    --status-not-paid: #e1d4c0;
 }
 
 .dark {
@@ -126,6 +131,11 @@
     --sidebar-accent-foreground: oklch(0.93 0.008 70);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.58 0.08 163);
+
+    /* Status colors (same as light for now) */
+    --status-paid: #45825d;
+    --status-invoiced: #fddd74;
+    --status-not-paid: #e1d4c0;
 }
 
 @theme inline {
@@ -161,6 +171,9 @@
     --color-card-foreground: var(--card-foreground);
     --color-card: var(--card);
     --color-foreground: var(--foreground);
+    --color-status-paid: var(--status-paid);
+    --color-status-invoiced: var(--status-invoiced);
+    --color-status-not-paid: var(--status-not-paid);
     --color-background: var(--background);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
@@ -177,17 +190,13 @@
     }
   body {
     @apply text-foreground;
-    background-color: oklch(0.93 0.012 70);
+    background-color: oklch(0.97 0.008 70);
     }
   html {
     @apply font-sans;
     }
 }
 
-/* Pinned sidebar: remove right padding so it extends to edge */
-[data-slot="sidebar-container"]:not([data-floating]) {
-  padding-right: 0;
-}
 
 /* Floating sidebar (unpinned, revealed on hover): overlay, margins + shadow */
 [data-slot="sidebar"]:has([data-floating]) [data-slot="sidebar-gap"] {

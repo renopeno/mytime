@@ -13,7 +13,6 @@ import { useDashboardData } from '@/hooks/useDashboardData'
 import type { DashboardFilters, DashboardData } from '@/hooks/useDashboardData'
 import { useProjects } from '@/hooks/useProjects'
 import { useClients } from '@/hooks/useClients'
-import { formatDuration } from '@/lib/duration'
 import { formatCurrency } from '@/lib/format'
 import { getGroupingMode, groupEntries } from '@/lib/chart-utils'
 import type { GroupedDataPoint } from '@/lib/chart-utils'
@@ -331,7 +330,7 @@ function BreakdownChart({
     const items = mode === 'project' ? data.byProject : data.byClient
     return items
       .map((item, index) => {
-        const color = 'color' in item ? getColor(item.color, index) : getColor(undefined, index)
+        const color = 'color' in item ? getColor(item.color as string | undefined, index) : getColor(undefined, index)
         const row: Record<string, unknown> = {
           name: item.name,
           amount: Math.round(item.amount * 100) / 100,
@@ -380,7 +379,7 @@ function BreakdownChart({
                 </>
               ) : (
                 <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
-                  {chartData.map((entry, index) => (
+                  {chartData.map((entry) => (
                     <Cell key={entry.name as string} fill={entry.color as string} />
                   ))}
                 </Bar>

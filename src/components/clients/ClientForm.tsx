@@ -22,18 +22,12 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { ColorSwatchPicker } from '@/components/ui/color-swatch-picker'
 
 const clientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email').or(z.literal('')).optional(),
-  address: z.string().optional(),
-  notes: z.string().optional(),
-  color: z.string().optional(),
   hourly_rate: z.number().nullable(),
   is_active: z.boolean(),
 })
@@ -55,10 +49,6 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: '',
-      email: '',
-      address: '',
-      notes: '',
-      color: '#6366f1',
       hourly_rate: null,
       is_active: true,
     },
@@ -68,10 +58,6 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
     if (open) {
       form.reset({
         name: client?.name ?? '',
-        email: client?.email ?? '',
-        address: client?.address ?? '',
-        notes: client?.notes ?? '',
-        color: client?.color ?? '#6366f1',
         hourly_rate: client?.hourly_rate ?? null,
         is_active: client?.is_active ?? true,
       })
@@ -105,101 +91,64 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
           <DialogTitle>{isEditing ? 'Edit Client' : 'Add Client'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Client name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="client@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="hourly_rate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hourly Rate (EUR)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Uses default rate"
-                      value={field.value ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        field.onChange(val === '' ? null : parseFloat(val))
-                      }}
-                    />
-                  </FormControl>
-                  {!field.value && (
-                    <FormDescription>Leave empty to use default rate</FormDescription>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* General */}
+            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
+              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+                <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">General</p>
+              </div>
+              <div className="space-y-6 p-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Client address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Additional notes" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <ColorSwatchPicker
-                      value={field.value ?? '#6366f1'}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                />
+              </div>
+            </div>
+
+            {/* Billing */}
+            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
+              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+                <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">Billing</p>
+              </div>
+              <div className="space-y-6 p-6">
+                <FormField
+                  control={form.control}
+                  name="hourly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hourly Rate (EUR)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Uses default rate"
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value
+                            field.onChange(val === '' ? null : parseFloat(val))
+                          }}
+                        />
+                      </FormControl>
+                      {!field.value && (
+                        <FormDescription>Leave empty to use default rate</FormDescription>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
             {isEditing && (
               <FormField
                 control={form.control}

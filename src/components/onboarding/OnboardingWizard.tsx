@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -27,8 +26,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
 import { ClientSelect } from '@/components/clients/ClientSelect'
 import { ColorSwatchPicker } from '@/components/ui/color-swatch-picker'
+import { PROJECT_TYPES, getProjectTypeLabel } from '@/types/app.types'
 
 // ─── Step 1: Workspace name ──────────────────────────────────────────────────
 
@@ -221,13 +222,11 @@ function StepDailyHours({ onNext }: { onNext: () => void }) {
 
 const clientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email').or(z.literal('')).optional(),
-  color: z.string(),
 })
 
 interface StepAddClientProps {
   onNext: () => void
-  onClientCreated: (clientId: string, clientColor: string) => void
+  onClientCreated: (clientId: string) => void
 }
 
 function StepAddClient({ onNext, onClientCreated }: StepAddClientProps) {
@@ -235,16 +234,16 @@ function StepAddClient({ onNext, onClientCreated }: StepAddClientProps) {
 
   const form = useForm({
     resolver: zodResolver(clientSchema),
-    defaultValues: { name: '', email: '', color: '#6366f1' },
+    defaultValues: { name: '' },
   })
 
-  const onSubmit = async (values: { name: string; email?: string; color: string }) => {
+  const onSubmit = async (values: { name: string }) => {
     const { data, error } = await createClient(values)
     if (error || !data) {
       toast.error('Failed to create client')
       return
     }
-    onClientCreated(data.id, data.color ?? '#6366f1')
+    onClientCreated(data.id)
     onNext()
   }
 
@@ -259,32 +258,6 @@ function StepAddClient({ onNext, onClientCreated }: StepAddClientProps) {
               <FormLabel>Client Name</FormLabel>
               <FormControl>
                 <Input placeholder="Acme Corp" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="client@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <ColorSwatchPicker value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -309,43 +282,30 @@ const projectSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   client_id: z.string().nullable(),
   color: z.string(),
+  type: z.string().min(1, 'Type is required'),
   hourly_rate: z.number().nullable(),
 })
 
 interface StepAddProjectProps {
   onComplete: () => void
   preselectedClientId: string | null
-  preselectedColor: string | null
 }
 
-function StepAddProject({ onComplete, preselectedClientId, preselectedColor }: StepAddProjectProps) {
+function StepAddProject({ onComplete, preselectedClientId }: StepAddProjectProps) {
   const { createProject } = useProjects()
-  const { clients } = useClients()
 
   const form = useForm({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       name: '',
       client_id: preselectedClientId,
-      color: preselectedColor ?? '#6366f1',
+      color: '#6366f1',
+      type: 'web_design',
       hourly_rate: null as number | null,
     },
   })
 
-  const userOverrodeColor = useRef(false)
-  const watchedClientId = useWatch({ control: form.control, name: 'client_id' })
-
-  useEffect(() => {
-    if (userOverrodeColor.current) return
-    if (watchedClientId) {
-      const client = clients.find((c) => c.id === watchedClientId)
-      if (client?.color) {
-        form.setValue('color', client.color, { shouldDirty: false })
-      }
-    }
-  }, [watchedClientId, clients, form])
-
-  const onSubmit = async (values: { name: string; client_id: string | null; color: string; hourly_rate: number | null }) => {
+  const onSubmit = async (values: { name: string; client_id: string | null; color: string; type: string; hourly_rate: number | null }) => {
     const { error } = await createProject(values)
     if (error) {
       toast.error('Failed to create project')
@@ -388,6 +348,30 @@ function StepAddProject({ onComplete, preselectedClientId, preselectedColor }: S
         />
         <FormField
           control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <span className="flex flex-1 text-left text-sm">{getProjectTypeLabel(field.value)}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_TYPES.map((pt) => (
+                      <SelectItem key={pt.value} value={pt.value}>
+                        {pt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="color"
           render={({ field }) => (
             <FormItem>
@@ -395,10 +379,7 @@ function StepAddProject({ onComplete, preselectedClientId, preselectedColor }: S
               <FormControl>
                 <ColorSwatchPicker
                   value={field.value}
-                  onChange={(color) => {
-                    userOverrodeColor.current = true
-                    field.onChange(color)
-                  }}
+                  onChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />
@@ -469,11 +450,9 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
   const [createdClientId, setCreatedClientId] = useState<string | null>(null)
-  const [createdClientColor, setCreatedClientColor] = useState<string | null>(null)
 
-  const handleClientCreated = (id: string, color: string) => {
+  const handleClientCreated = (id: string) => {
     setCreatedClientId(id)
-    setCreatedClientColor(color)
   }
 
   return (
@@ -509,7 +488,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           <StepAddProject
             onComplete={onComplete}
             preselectedClientId={createdClientId}
-            preselectedColor={createdClientColor}
           />
         )}
       </DialogContent>
