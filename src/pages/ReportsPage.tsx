@@ -48,7 +48,6 @@ function getColor(color: string | undefined, index: number): string {
 }
 
 type BillingStatusValue = 'not_paid' | 'invoice_sent' | 'paid'
-type BreakdownMode = 'project' | 'client'
 type TrendMetric = 'hours' | 'earnings'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -293,8 +292,8 @@ function KPICards({
 
 function LayeredRingChart({
   segments,
-  size = 220,
-  strokeWidth = 22,
+  size = 260,
+  strokeWidth = 26,
   centerLabel,
   centerValue,
 }: {
@@ -406,9 +405,9 @@ function BillingDonutChart({
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card>
+    <Card className="border-2 p-2">
       <CardHeader>
-        <CardTitle>Billing Status</CardTitle>
+        <CardTitle className="text-lg font-semibold">Billing Status</CardTitle>
       </CardHeader>
       <CardContent>
         {total === 0 ? (
@@ -459,10 +458,8 @@ function EarningsDonutChart({
   data: DashboardData
   loading: boolean
 }) {
-  const [mode, setMode] = useState<BreakdownMode>('project')
-
   const { segments, legendItems } = useMemo(() => {
-    const items = mode === 'project' ? data.byProject : data.byClient
+    const items = data.byClient
     const sorted = [...items]
       .map((item, index) => {
         const color = 'color' in item ? getColor(item.color as string | undefined, index) : getColor(undefined, index)
@@ -496,24 +493,16 @@ function EarningsDonutChart({
     }
 
     return { segments: main, legendItems: legend }
-  }, [mode, data.byProject, data.byClient])
+  }, [data.byClient])
 
   const total = segments.reduce((sum, s) => sum + s.value, 0)
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle>Earnings Breakdown</CardTitle>
-        <SegmentControl
-          options={[
-            { value: 'project' as BreakdownMode, label: 'By Project' },
-            { value: 'client' as BreakdownMode, label: 'By Client' },
-          ]}
-          value={mode}
-          onChange={setMode}
-        />
+    <Card className="border-2 p-2">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">Earnings by Client</CardTitle>
       </CardHeader>
       <CardContent>
         {segments.length === 0 ? (
@@ -613,9 +602,9 @@ function TrendChart({
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
-    <Card>
+    <Card className="border-2 p-2">
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <CardTitle>Trend</CardTitle>
+        <CardTitle className="text-lg font-semibold">Trend</CardTitle>
         <SegmentControl
           options={[
             { value: 'hours' as TrendMetric, label: 'Hours' },
@@ -735,7 +724,7 @@ function TimeEntriesTable({
             {visibleEntries.map((entry, i) => {
               const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
               return (
-                <div key={i} className="p-4 space-y-2">
+                <div key={i} className="p-4 space-y-2 bg-white dark:bg-background">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       {entry.projectName ? (
@@ -779,7 +768,7 @@ function TimeEntriesTable({
               {visibleEntries.map((entry, i) => {
                 const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
                 return (
-                  <TableRow key={i}>
+                  <TableRow key={i} className="bg-white dark:bg-background">
                     <TableCell className="text-sm text-muted-foreground">{formatShortDate(entry.date)}</TableCell>
                     <TableCell>
                       {entry.projectName ? (
