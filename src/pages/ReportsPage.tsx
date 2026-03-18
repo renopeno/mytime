@@ -600,6 +600,148 @@ function NoData() {
   return <div className="flex h-[200px] items-center justify-center text-muted-foreground">No data for this period</div>
 }
 
+// ─── Time Entries Table ──────────────────────────────────────────────────
+
+const ENTRIES_PAGE_SIZE = 20
+
+function formatDurationHMM(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return `${h}:${m.toString().padStart(2, '0')}`
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = parseISO(dateStr)
+  return format(d, 'dd.MM.')
+}
+
+function TimeEntriesTable({
+  data,
+  loading,
+}: {
+  data: DashboardData
+  loading: boolean
+}) {
+  const isMobile = useIsMobile()
+  const [visibleCount, setVisibleCount] = useState(ENTRIES_PAGE_SIZE)
+
+  const projectColorMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of data.byProject) {
+      map.set(p.name, p.color)
+    }
+    return map
+  }, [data.byProject])
+
+  const sortedEntries = useMemo(
+    () => [...data.entries].sort((a, b) => b.date.localeCompare(a.date)),
+    [data.entries],
+  )
+
+  const visibleEntries = sortedEntries.slice(0, visibleCount)
+  const hasMore = visibleCount < sortedEntries.length
+
+  if (loading) return <Skeleton className="h-[200px] w-full" />
+
+  if (sortedEntries.length === 0) return null
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline gap-2">
+        <h2 className="font-serif text-xl font-medium">Time Entries</h2>
+        <span className="text-sm text-muted-foreground">({sortedEntries.length})</span>
+      </div>
+
+      {isMobile ? (
+        <div className="space-y-2">
+          {visibleEntries.map((entry, i) => {
+            const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
+            return (
+              <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    {entry.projectName ? (
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: color || '#6366f1' }}
+                        />
+                        <span className="truncate">{entry.projectName}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No project</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">{formatShortDate(entry.date)}</span>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <span className="block text-sm font-semibold">{formatDurationHMM(entry.durationMinutes)}</span>
+                    <span className="block text-xs text-muted-foreground/60">{formatCurrency(entry.amount)}</span>
+                  </div>
+                </div>
+                {entry.description && (
+                  <p className="text-sm text-muted-foreground truncate">{entry.description}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[72px]">Date</TableHead>
+              <TableHead>Project</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="w-[72px] text-right">Duration</TableHead>
+              <TableHead className="w-[96px] text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {visibleEntries.map((entry, i) => {
+              const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
+              return (
+                <TableRow key={i}>
+                  <TableCell className="text-sm text-muted-foreground">{formatShortDate(entry.date)}</TableCell>
+                  <TableCell>
+                    {entry.projectName ? (
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <span
+                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: color || '#6366f1' }}
+                        />
+                        <span className="truncate">{entry.projectName}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{entry.clientName ?? '—'}</TableCell>
+                  <TableCell className="max-w-[300px] truncate text-sm">{entry.description || <span className="italic text-muted-foreground">—</span>}</TableCell>
+                  <TableCell className="text-right text-sm">{formatDurationHMM(entry.durationMinutes)}</TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground/60">{formatCurrency(entry.amount)}</TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount((c) => c + ENTRIES_PAGE_SIZE)}
+          >
+            Show more ({sortedEntries.length - visibleCount} remaining)
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
@@ -789,6 +931,9 @@ export default function ReportsPage() {
         />
         <BillingDonutChart data={data} loading={data.isLoading} />
       </div>
+
+      {/* Time Entries */}
+      <TimeEntriesTable data={data} loading={data.isLoading} />
     </div>
   )
 }
