@@ -53,8 +53,10 @@ const getNavGroups = (companyName?: string | null) => [
   },
 ]
 
+const DEV_MODE = import.meta.env.DEV;
+
 export function AppSidebar({ companyName }: { companyName?: string | null }) {
-  const { user, signOut } = useAuth()
+  const { user, signOut, setDevShowLogin } = useAuth()
   const { isMobile, setOpenMobile } = useSidebar()
 
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
@@ -128,7 +130,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => void signOut()}
+              onClick={() => { DEV_MODE ? setDevShowLogin(true) : void signOut() }}
               className="flex items-center gap-2"
             >
               <LogOut className="h-4 w-4" />

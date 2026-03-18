@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v6'
+const DEV_DB_VERSION = 'v7'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -47,42 +47,84 @@ function save(key: string, data: unknown) {
 // ─── Seed data ─────────────────────────────────────────────────────────────────
 
 function buildSeed() {
-  const cAcme = uid(), cTech = uid(), cStudio = uid()
+  const cAcme = uid(), cTech = uid(), cStudio = uid(), cStartup = uid(), cDesign = uid()
   const pWeb = uid(), pEcom = uid(), pMvp = uid(), pBrand = uid(), pInternal = uid()
+  const pMobile = uid(), pBrandId = uid(), pEcomPlat = uid()
 
   const clients: Client[] = [
-    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',   hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',     hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',   hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
+    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',    hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',      hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',    hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
+    { id: cStartup, user_id: DEV_USER_ID, name: 'Startup Hub',    hourly_rate: 55,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cDesign,  user_id: DEV_USER_ID, name: 'Design Studio',  hourly_rate: 70,   is_active: true, created_at: now(), updated_at: now() },
   ]
 
   const projects: Project[] = [
-    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,   name: 'Website Redesign',   description: 'Kompletni redizajn web stranice', color: '#3b82f6', type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
-    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,   name: 'E-commerce',         description: 'Shopify integracija i custom cart', color: '#0ea5e9', type: 'webshop',        is_archived: false, hourly_rate: 90,  estimated_hours: 5,    created_at: now(), updated_at: now() },
-    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,   name: 'MVP razvoj',         description: 'React + Node.js MVP', color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 65,               estimated_hours: 20,   created_at: now(), updated_at: now() },
-    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio, name: 'Brand identitet',    description: 'Logo, boje, tipografija', color: '#f59e0b', type: 'deck_design',   is_archived: false, hourly_rate: null,           estimated_hours: 4,    created_at: now(), updated_at: now() },
-    { id: pInternal, user_id: DEV_USER_ID, client_id: null,    name: 'Interni zadaci',     description: null, color: '#6b7280', type: 'web_design',     is_archived: false, hourly_rate: null,                               estimated_hours: null, created_at: now(), updated_at: now() },
+    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,    name: 'Website Redesign',    description: 'Kompletni redizajn web stranice',       color: '#3b82f6', type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
+    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,    name: 'E-commerce',          description: 'Shopify integracija i custom cart',      color: '#0ea5e9', type: 'webshop',        is_archived: false, hourly_rate: 90,   estimated_hours: 5,    created_at: now(), updated_at: now() },
+    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,    name: 'MVP razvoj',          description: 'React + Node.js MVP',                    color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 65,   estimated_hours: 20,   created_at: now(), updated_at: now() },
+    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio,  name: 'Brand identitet',     description: 'Logo, boje, tipografija',                color: '#f59e0b', type: 'deck_design',   is_archived: false, hourly_rate: null, estimated_hours: 4,    created_at: now(), updated_at: now() },
+    { id: pInternal, user_id: DEV_USER_ID, client_id: null,     name: 'Interni zadaci',      description: null,                                     color: '#6b7280', type: 'web_design',     is_archived: false, hourly_rate: null, estimated_hours: null, created_at: now(), updated_at: now() },
+    { id: pMobile,   user_id: DEV_USER_ID, client_id: cStartup, name: 'Mobile App',          description: 'React Native mobile application',        color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 60,   estimated_hours: 40,   created_at: now(), updated_at: now() },
+    { id: pBrandId,  user_id: DEV_USER_ID, client_id: cDesign,  name: 'Brand Identity',      description: 'Full brand identity package',             color: '#ec4899', type: 'product_design', is_archived: false, hourly_rate: 75,   estimated_hours: 15,   created_at: now(), updated_at: now() },
+    { id: pEcomPlat, user_id: DEV_USER_ID, client_id: cTech,    name: 'E-commerce Platform', description: 'Custom e-commerce platform build',        color: '#06b6d4', type: 'webshop',        is_archived: false, hourly_rate: 50,   estimated_hours: 30,   created_at: now(), updated_at: now() },
   ]
 
   const timeEntries: TimeEntry[] = [
-    // Ovaj tjedan
+    // Today & yesterday
     { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Homepage redesign — hero sekcija',     date: daysAgo(0), duration_minutes: 120, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'API integracija — auth endpoints',      date: daysAgo(0), duration_minutes: 150, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Implementacija cart-a',                 date: daysAgo(1), duration_minutes: 180, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Klijentski meeting — pregled mockupa',  date: daysAgo(2), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Planiranje sprintova',                  date: daysAgo(2), duration_minutes:  60, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    // Prošli tjedan
-    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'User authentication — JWT setup',       date: daysAgo(8), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Checkout flow i payment gateway',       date: daysAgo(9), duration_minutes: 150, is_paid: false, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Dizajn mockupi — inner pages',          date: daysAgo(10), duration_minutes: 180, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Backend setup — Express + PostgreSQL',  date: daysAgo(11), duration_minutes: 240, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pBrand,    description: 'Logo dizajn — finalizacija',            date: daysAgo(11), duration_minutes: 120, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    // Dva tjedna nazad
-    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Database schema i migracije',           date: daysAgo(15), duration_minutes: 180, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Product backlog i user stories',        date: daysAgo(16), duration_minutes:  90, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pBrand,    description: 'Color palette i tipografija',           date: daysAgo(17), duration_minutes:  60, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Analiza konkurencije',                  date: daysAgo(18), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
-    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Wireframing — svi screeni',             date: daysAgo(19), duration_minutes: 180, is_paid: true, is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'API integracija — auth endpoints',     date: daysAgo(0), duration_minutes: 150, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'Navigation setup — React Navigation',  date: daysAgo(0), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Implementacija cart-a',                date: daysAgo(1), duration_minutes: 180, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Mood board creation',                  date: daysAgo(1), duration_minutes:  60, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    // This week
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Klijentski meeting — pregled mockupa', date: daysAgo(2), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Planiranje sprintova',                 date: daysAgo(2), duration_minutes:  60, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Product catalog API design',           date: daysAgo(3), duration_minutes: 240, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'Authentication screens',               date: daysAgo(3), duration_minutes: 180, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Typography exploration',               date: daysAgo(4), duration_minutes: 120, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Responsive layout fixes',              date: daysAgo(4), duration_minutes:  45, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Bug fixes — login flow',               date: daysAgo(5), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Shopping cart implementation',          date: daysAgo(5), duration_minutes: 210, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    // Last week
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'User authentication — JWT setup',      date: daysAgo(8),  duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Checkout flow i payment gateway',      date: daysAgo(9),  duration_minutes: 150, is_paid: false, is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Dizajn mockupi — inner pages',         date: daysAgo(10), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Backend setup — Express + PostgreSQL', date: daysAgo(11), duration_minutes: 240, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrand,    description: 'Logo dizajn — finalizacija',           date: daysAgo(11), duration_minutes: 120, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'Push notification setup',              date: daysAgo(8),  duration_minutes: 150, is_paid: false, is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Logo concepts — round 1',              date: daysAgo(9),  duration_minutes: 180, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Payment gateway integration',          date: daysAgo(10), duration_minutes: 300, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Team standup & planning',              date: daysAgo(8),  duration_minutes:  30, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'UX research — user interviews',        date: daysAgo(12), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    // Two weeks ago
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Database schema i migracije',          date: daysAgo(15), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Product backlog i user stories',       date: daysAgo(16), duration_minutes:  90, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrand,    description: 'Color palette i tipografija',          date: daysAgo(17), duration_minutes:  60, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Analiza konkurencije',                 date: daysAgo(18), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Wireframing — svi screeni',            date: daysAgo(19), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Database design — ERD diagram',        date: daysAgo(15), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'Wireframes — main user flows',         date: daysAgo(16), duration_minutes: 240, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Competitive analysis — brand audit',   date: daysAgo(17), duration_minutes:  90, is_paid: false, is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Product page template design',         date: daysAgo(18), duration_minutes: 150, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Invoice template creation',            date: daysAgo(19), duration_minutes:  45, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    // Three weeks ago
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Technical architecture planning',      date: daysAgo(22), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Content strategy meeting',             date: daysAgo(22), duration_minutes:  60, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'App architecture — state management',  date: daysAgo(23), duration_minutes: 210, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Client kickoff meeting',               date: daysAgo(23), duration_minutes:  90, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Requirements gathering',               date: daysAgo(24), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrand,    description: 'Brand workshop — discovery session',   date: daysAgo(24), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Monthly bookkeeping',                  date: daysAgo(25), duration_minutes:  60, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcom,     description: 'Shopify theme customization',          date: daysAgo(25), duration_minutes: 240, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'CI/CD pipeline setup',                 date: daysAgo(26), duration_minutes: 150, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    // Four weeks ago
+    { id: uid(), user_id: DEV_USER_ID, project_id: pWeb,      description: 'Stakeholder interviews',               date: daysAgo(28), duration_minutes:  90, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMobile,   description: 'Project kickoff & scoping',            date: daysAgo(28), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pEcomPlat, description: 'Competitor platform analysis',         date: daysAgo(29), duration_minutes: 180, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pBrandId,  description: 'Design system foundations',            date: daysAgo(29), duration_minutes: 150, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pMvp,      description: 'Initial project setup & tooling',      date: daysAgo(30), duration_minutes: 120, is_paid: true,  is_invoiced: true,  created_at: now(), updated_at: now() },
+    { id: uid(), user_id: DEV_USER_ID, project_id: pInternal, description: 'Client proposal drafting',             date: daysAgo(30), duration_minutes:  90, is_paid: false, is_invoiced: false, created_at: now(), updated_at: now() },
   ]
 
   const settings: Settings = {

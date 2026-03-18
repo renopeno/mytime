@@ -22,11 +22,14 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  devShowLogin: boolean;
+  setDevShowLogin: (show: boolean) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [devShowLogin, setDevShowLogin] = useState(false);
   const [user, setUser] = useState<User | null>(DEV_MODE ? DEV_USER : null);
   const [loading, setLoading] = useState(!DEV_MODE);
 
@@ -84,9 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const effectiveUser = DEV_MODE && devShowLogin ? null : user;
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signInWithGoogle, signInWithGitHub, signInWithEmail, signUpWithEmail, signOut }}
+      value={{ user: effectiveUser, loading, signInWithGoogle, signInWithGitHub, signInWithEmail, signUpWithEmail, signOut, devShowLogin, setDevShowLogin }}
     >
       {children}
     </AuthContext.Provider>

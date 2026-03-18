@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 
+const DEV_MODE = import.meta.env.DEV;
+
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithGitHub, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithGitHub, signInWithEmail, signUpWithEmail, devShowLogin, setDevShowLogin } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,8 +15,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const devReturnToApp = () => {
+    if (DEV_MODE && devShowLogin) {
+      setDevShowLogin(false);
+      return true;
+    }
+    return false;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (devReturnToApp()) return;
     setError(null);
     setSuccessMessage(null);
     setLoading(true);
@@ -179,7 +190,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               size="lg"
-              onClick={signInWithGoogle}
+              onClick={() => { if (!devReturnToApp()) signInWithGoogle(); }}
             >
               <svg
                 className="mr-2 h-4 w-4"
@@ -209,7 +220,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full"
               size="lg"
-              onClick={signInWithGitHub}
+              onClick={() => { if (!devReturnToApp()) signInWithGitHub(); }}
             >
               <Github className="mr-2 h-4 w-4" />
               GitHub
