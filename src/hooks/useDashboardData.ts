@@ -27,7 +27,17 @@ export interface DashboardData {
   }
   byProject: Array<{ name: string; minutes: number; amount: number; color: string }>
   byClient: Array<{ name: string; minutes: number; amount: number }>
-  entries: Array<{ date: string; durationMinutes: number; amount: number; isPaid: boolean; isInvoiced: boolean }>
+  entries: Array<{
+    date: string
+    durationMinutes: number
+    amount: number
+    isPaid: boolean
+    isInvoiced: boolean
+    projectName?: string
+    clientName?: string
+    description: string
+    rate: number
+  }>
   isLoading: boolean
 }
 
@@ -159,6 +169,10 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
           amount,
           isPaid: entry.is_paid,
           isInvoiced: entry.is_invoiced,
+          projectName: project?.name ?? undefined,
+          clientName: project?.client?.name ?? undefined,
+          description: entry.description ?? '',
+          rate: effectiveRate,
         })
       }
 

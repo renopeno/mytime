@@ -571,13 +571,42 @@ export default function ReportsPage() {
   async function handleExportPDF() {
     try {
       const { pdf } = await import('@react-pdf/renderer')
-      const { MonthlyReportPDF } = await import('@/lib/pdf-report')
+      const { ReportPDF } = await import('@/lib/pdf-report')
+
+      const selectedProjectNames = selectedProjectIds
+        .map((id) => projects.find((p) => p.id === id)?.name)
+        .filter(Boolean) as string[]
+      const selectedClientNames = selectedClientIds
+        .map((id) => clients.find((c) => c.id === id)?.name)
+        .filter(Boolean) as string[]
+
+      const pdfEntries = data.entries.map((e) => ({
+        date: e.date,
+        projectName: e.projectName,
+        clientName: e.clientName,
+        description: e.description,
+        durationMinutes: e.durationMinutes,
+        rate: e.rate,
+        amount: e.amount,
+      }))
+
       const blob = await pdf(
-        <MonthlyReportPDF
-          entries={[]}
-          title="Reports"
-          dateRange={`${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()}`}
-          defaultHourlyRate={0}
+        <ReportPDF
+          dateRange={{ from: dateRange.from, to: dateRange.to }}
+          filters={{
+            projects: selectedProjectNames.length > 0 ? selectedProjectNames : undefined,
+            clients: selectedClientNames.length > 0 ? selectedClientNames : undefined,
+            billingStatus: billingStatus !== 'all' ? billingStatus : undefined,
+          }}
+          summary={{
+            totalMinutes: data.totalMinutes,
+            totalAmount: data.totalAmount,
+            workingDays: data.workingDays,
+            billingBreakdown: data.billingBreakdown,
+          }}
+          byProject={data.byProject}
+          byClient={data.byClient}
+          entries={pdfEntries}
         />
       ).toBlob()
       const url = URL.createObjectURL(blob)
