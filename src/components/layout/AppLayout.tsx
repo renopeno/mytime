@@ -41,7 +41,7 @@ export function AppLayout() {
       <AppSidebar companyName={settings?.company_name} />
       <SidebarInset className="h-svh md:h-[calc(100svh-24px)]">
         <MobileHeader />
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-t-xl md:rounded-t-none bg-background">
           <Outlet />
         </div>
       </SidebarInset>
