@@ -31,15 +31,17 @@ export function UserAvatarMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full">
-          <Avatar className="h-8 w-8 shrink-0">
-            <AvatarImage src={avatarUrl} alt={fullName} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+      <DropdownMenuTrigger
+        render={
+          <button className="outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full" />
+        }
+      >
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarImage src={avatarUrl} alt={fullName} />
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent side={side} align={align} className="w-48">
         <DropdownMenuItem render={<Link to="/settings" className="flex items-center gap-2" />}>
