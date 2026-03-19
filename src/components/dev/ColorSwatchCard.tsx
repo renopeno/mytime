@@ -19,7 +19,7 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="group w-full cursor-pointer overflow-hidden rounded-lg text-left ring-1 ring-border transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+      className="group w-full cursor-pointer overflow-hidden rounded-lg text-left ring-[1px] ring-black/[0.06] transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
     >
       {/* Color block */}
       <div
