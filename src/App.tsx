@@ -14,6 +14,7 @@ const ClientsPage = lazy(() => import('@/pages/ClientsPage'))
 const InvoicingPage = lazy(() => import('@/pages/InvoicingPage'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
+const DevColorStyleguidePage = lazy(() => import('@/pages/DevColorStyleguidePage'))
 
 function ProtectedRoute() {
   const { user, loading } = useAuth()
@@ -76,6 +77,9 @@ const router = createBrowserRouter([
           { path: 'dashboard', element: <Navigate to="/reports" replace /> },
           { path: 'reports', element: <SuspenseWrapper><ReportsPage /></SuspenseWrapper> },
           { path: 'settings', element: <SuspenseWrapper><SettingsPage /></SuspenseWrapper> },
+          ...(import.meta.env.DEV ? [
+            { path: 'dev/colors', element: <SuspenseWrapper><DevColorStyleguidePage /></SuspenseWrapper> },
+          ] : []),
         ],
       },
     ],

@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router'
+import { Palette } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSettings } from '@/hooks/useSettings'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function DevSettings() {
+  const navigate = useNavigate()
   const { updateSettings } = useSettings()
 
   const resetOnboarding = async () => {
@@ -22,9 +25,15 @@ export function DevSettings() {
         <CardDescription>Only visible in dev mode.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button variant="outline" size="sm" onClick={resetOnboarding}>
-          Reset onboarding
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={resetOnboarding}>
+            Reset onboarding
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dev/colors')}>
+            <Palette className="mr-1.5 h-3.5 w-3.5" />
+            Color Styleguide
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
