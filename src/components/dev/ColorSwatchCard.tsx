@@ -19,7 +19,7 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-      className="group w-full cursor-pointer overflow-hidden rounded-lg border border-border text-left transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+      className="group w-full cursor-pointer overflow-hidden rounded-lg text-left ring-1 ring-border transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
     >
       {/* Color block */}
       <div
@@ -32,7 +32,7 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
       </div>
 
       {/* Info block */}
-      <div className="flex h-[55px] flex-col justify-center gap-0.5 bg-white px-2.5">
+      <div className="flex h-[55px] flex-col justify-center gap-0.5 bg-card px-2.5">
         <span className="truncate text-xs font-semibold text-card-foreground">
           {entry.label}
         </span>

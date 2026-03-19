@@ -74,7 +74,6 @@ export default function DevColorStyleguidePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="space-y-3">
@@ -152,7 +151,6 @@ export default function DevColorStyleguidePage() {
           </section>
         )
       })}
-    </div>
     </div>
   )
 }
