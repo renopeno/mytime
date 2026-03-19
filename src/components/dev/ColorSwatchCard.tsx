@@ -32,7 +32,7 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
       </div>
 
       {/* Info block */}
-      <div className="flex h-[55px] flex-col justify-center gap-0.5 bg-card px-2.5">
+      <div className="flex h-[55px] flex-col justify-center gap-0.5 bg-white px-2.5">
         <span className="truncate text-xs font-semibold text-card-foreground">
           {entry.label}
         </span>
