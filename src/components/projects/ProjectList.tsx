@@ -196,11 +196,11 @@ export function ProjectList({
                 aria-label="Select all"
               />
             </TableHead>
-            <TableHead>Project</TableHead>
-            <TableHead>Client</TableHead>
-            <TableHead>Rate</TableHead>
-            <TableHead className="w-[180px]">Progress</TableHead>
-            <TableHead className="w-28">Actions</TableHead>
+            <TableHead className="w-[25%]">Project</TableHead>
+            <TableHead className="w-[20%]">Client</TableHead>
+            <TableHead className="w-[10%]">Rate</TableHead>
+            <TableHead className="w-[25%]">Progress</TableHead>
+            <TableHead className="w-20">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
