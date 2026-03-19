@@ -93,7 +93,7 @@ export function ClientList({
         <Button
           variant="outline"
           size="sm"
-          className="border-transparent bg-white/10 text-white hover:bg-white/15"
+          className="border-transparent bg-white/[0.08] text-white/90 hover:bg-white/[0.14] hover:text-white"
           onClick={() => {
             onBulkToggleActive(selectedClients)
             setSelected(new Set())
@@ -106,7 +106,7 @@ export function ClientList({
           )}
         </Button>
         <AlertDialog open={bulkDeleteOpen} onOpenChange={(open) => { setBulkDeleteOpen(open); if (!open) setBulkCascadeDelete(false) }}>
-          <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-transparent bg-white/10 text-white hover:bg-white/15" />}>
+          <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-transparent bg-white/[0.08] text-white/90 hover:bg-white/[0.14] hover:text-white" />}>
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Delete
           </AlertDialogTrigger>

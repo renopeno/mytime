@@ -361,7 +361,7 @@ export default function InvoicingPage() {
           <>
             <Button
               size="sm"
-              className="border-transparent bg-white/10 text-white hover:bg-white/15"
+              className="border-transparent bg-white/[0.08] text-white/90 hover:bg-white/[0.14] hover:text-white"
               variant="outline"
               onClick={handleMarkInvoiced}
             >
@@ -370,7 +370,7 @@ export default function InvoicingPage() {
             </Button>
             <Button
               size="sm"
-              className="border-transparent bg-white/10 text-white hover:bg-white/15"
+              className="border-transparent bg-white/[0.08] text-white/90 hover:bg-white/[0.14] hover:text-white"
               variant="outline"
               onClick={handleMarkPaid}
             >

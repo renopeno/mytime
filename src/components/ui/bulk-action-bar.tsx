@@ -13,8 +13,12 @@ export function BulkActionBar({ count, open, onClose, children }: BulkActionBarP
   return (
     <div
       className={cn(
-        'fixed bottom-0 right-0 z-50 p-2 transition-all duration-300 ease-out',
-        'left-0 md:left-[var(--sidebar-current-width)]',
+        'fixed bottom-2 z-50 transition-all duration-300 ease-out',
+        // Match SidebarInset bounds: inset variant has ml-0 (gap handles it) + mr-4
+        // Add 8px (0.5rem) extra padding from main container edges
+        'left-2 right-2',
+        'md:left-[calc(var(--sidebar-current-width)+1rem+0.5rem)]',
+        'md:right-[calc(1rem+0.5rem)]',
         open ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
       )}
     >
