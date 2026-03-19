@@ -101,6 +101,63 @@ export const colorRegistry: ColorEntry[] = [
     status: 'tokenized',
   },
 
+  // ─── Primitive: Green Scale ─────────────────────────────────────────────
+  {
+    id: 'green-20',
+    value: 'oklch(0.72 0.12 163)',
+    token: '--green-20',
+    tailwindClass: 'green-20',
+    primitive: null,
+    category: 'primitive',
+    label: 'Green 20',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+  {
+    id: 'green-40',
+    value: 'oklch(0.58 0.05 163)',
+    token: '--green-40',
+    tailwindClass: 'green-40',
+    primitive: null,
+    category: 'primitive',
+    label: 'Green 40',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+  {
+    id: 'green-60',
+    value: 'oklch(0.50 0.08 163)',
+    token: '--green-60',
+    tailwindClass: 'green-60',
+    primitive: null,
+    category: 'primitive',
+    label: 'Green 60',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+  {
+    id: 'green-80',
+    value: 'oklch(0.36 0.05 163)',
+    token: '--green-80',
+    tailwindClass: 'green-80',
+    primitive: null,
+    category: 'primitive',
+    label: 'Green 80',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+  {
+    id: 'green-100',
+    value: 'oklch(0.28 0.06 163)',
+    token: '--green-100',
+    tailwindClass: 'green-100',
+    primitive: null,
+    category: 'primitive',
+    label: 'Green 100',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+
   // ─── Core semantic tokens ──────────────────────────────────────────────
   { id: 'background', value: '#f9f4ef', token: '--background', tailwindClass: 'background', primitive: 'neutral-10', category: 'core', label: 'Background', usedIn: ['layouts', 'pages'], status: 'tokenized' },
   { id: 'foreground', value: '#13110f', token: '--foreground', tailwindClass: 'foreground', primitive: 'neutral-100', category: 'core', label: 'Foreground', usedIn: ['layouts', 'pages'], status: 'tokenized' },
@@ -122,14 +179,17 @@ export const colorRegistry: ColorEntry[] = [
   { id: 'sidebar-border', value: '#cfc6bc', token: '--sidebar-border', tailwindClass: 'sidebar-border', primitive: 'neutral-40', category: 'core', label: 'Sidebar Border', usedIn: ['sidebar dividers'], status: 'tokenized' },
   { id: 'sidebar-primary-foreground', value: '#f9f4ef', token: '--sidebar-primary-foreground', tailwindClass: 'sidebar-primary-foreground', primitive: 'neutral-10', category: 'core', label: 'Sidebar Primary FG', usedIn: ['sidebar active text'], status: 'tokenized' },
 
-  // ─── Core semantic tokens (chromatic — no neutral primitive) ───────────
-  { id: 'primary', value: 'oklch(0.36 0.05 163)', token: '--primary', tailwindClass: 'primary', primitive: null, category: 'core', label: 'Primary', usedIn: ['buttons', 'links'], status: 'tokenized' },
+  // ─── Core semantic tokens (chromatic — green primitives) ────────────────
+  { id: 'primary', value: 'oklch(0.36 0.05 163)', token: '--primary', tailwindClass: 'primary', primitive: 'green-80', category: 'core', label: 'Primary', usedIn: ['buttons', 'links'], status: 'tokenized' },
+  { id: 'primary-hover', value: 'oklch(0.28 0.06 163)', token: '--primary-hover', tailwindClass: 'primary-hover', primitive: 'green-100', category: 'core', label: 'Primary Hover', usedIn: ['button hover states'], status: 'tokenized' },
+  { id: 'ring', value: 'oklch(0.58 0.05 163)', token: '--ring', tailwindClass: 'ring', primitive: 'green-40', category: 'core', label: 'Ring', usedIn: ['focus rings'], status: 'tokenized' },
+  { id: 'sidebar-primary', value: 'oklch(0.36 0.05 163)', token: '--sidebar-primary', tailwindClass: 'sidebar-primary', primitive: 'green-80', category: 'core', label: 'Sidebar Primary', usedIn: ['sidebar active item'], status: 'tokenized' },
+  { id: 'sidebar-ring', value: 'oklch(0.58 0.05 163)', token: '--sidebar-ring', tailwindClass: 'sidebar-ring', primitive: 'green-40', category: 'core', label: 'Sidebar Ring', usedIn: ['sidebar focus ring'], status: 'tokenized' },
+
+  // ─── Core semantic tokens (chromatic — other) ─────────────────────────
   { id: 'secondary', value: 'oklch(0.84 0.16 90)', token: '--secondary', tailwindClass: 'secondary', primitive: null, category: 'core', label: 'Secondary', usedIn: ['secondary buttons'], status: 'tokenized' },
   { id: 'accent', value: 'oklch(0.68 0.09 280)', token: '--accent', tailwindClass: 'accent', primitive: null, category: 'core', label: 'Accent', usedIn: ['accent highlights'], status: 'tokenized' },
   { id: 'destructive', value: 'oklch(0.58 0.22 27)', token: '--destructive', tailwindClass: 'destructive', primitive: null, category: 'core', label: 'Destructive', usedIn: ['delete buttons', 'error states'], status: 'tokenized' },
-  { id: 'ring', value: 'oklch(0.58 0.05 163)', token: '--ring', tailwindClass: 'ring', primitive: null, category: 'core', label: 'Ring', usedIn: ['focus rings'], status: 'tokenized' },
-  { id: 'sidebar-primary', value: 'oklch(0.36 0.05 163)', token: '--sidebar-primary', tailwindClass: 'sidebar-primary', primitive: null, category: 'core', label: 'Sidebar Primary', usedIn: ['sidebar active item'], status: 'tokenized' },
-  { id: 'sidebar-ring', value: 'oklch(0.58 0.05 163)', token: '--sidebar-ring', tailwindClass: 'sidebar-ring', primitive: null, category: 'core', label: 'Sidebar Ring', usedIn: ['sidebar focus ring'], status: 'tokenized' },
 
   // ─── Status ────────────────────────────────────────────────────────────
   { id: 'status-paid', value: '#45825d', token: '--status-paid', tailwindClass: 'status-paid', primitive: null, category: 'status', label: 'Paid', usedIn: ['ProjectList.tsx', 'TimeEntryList.tsx', 'InvoicingPage.tsx', 'ReportsPage.tsx'], status: 'tokenized' },
@@ -137,10 +197,10 @@ export const colorRegistry: ColorEntry[] = [
   { id: 'status-not-paid', value: '#e1d4c0', token: '--status-not-paid', tailwindClass: 'status-not-paid', primitive: null, category: 'status', label: 'Not Paid', usedIn: ['InvoicingPage.tsx', 'ReportsPage.tsx'], status: 'tokenized' },
 
   // ─── Chart (tokenized) ────────────────────────────────────────────────
-  { id: 'chart-1', value: 'oklch(0.36 0.05 163)', token: '--chart-1', tailwindClass: 'chart-1', primitive: null, category: 'chart', label: 'Chart 1 (Green)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
+  { id: 'chart-1', value: 'oklch(0.36 0.05 163)', token: '--chart-1', tailwindClass: 'chart-1', primitive: 'green-80', category: 'chart', label: 'Chart 1 (Green)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
   { id: 'chart-2', value: 'oklch(0.84 0.16 90)', token: '--chart-2', tailwindClass: 'chart-2', primitive: null, category: 'chart', label: 'Chart 2 (Yellow)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
   { id: 'chart-3', value: 'oklch(0.68 0.09 280)', token: '--chart-3', tailwindClass: 'chart-3', primitive: null, category: 'chart', label: 'Chart 3 (Lilac)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
-  { id: 'chart-4', value: 'oklch(0.50 0.08 163)', token: '--chart-4', tailwindClass: 'chart-4', primitive: null, category: 'chart', label: 'Chart 4 (Muted Green)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
+  { id: 'chart-4', value: 'oklch(0.50 0.08 163)', token: '--chart-4', tailwindClass: 'chart-4', primitive: 'green-60', category: 'chart', label: 'Chart 4 (Muted Green)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
   { id: 'chart-5', value: 'oklch(0.75 0.12 90)', token: '--chart-5', tailwindClass: 'chart-5', primitive: null, category: 'chart', label: 'Chart 5 (Bright Yellow)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },
 
   // ─── Chart (unresolved — hardcoded in ReportsPage) ─────────────────────

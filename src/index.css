@@ -51,18 +51,26 @@
     --border: var(--neutral-30);
     --input: var(--neutral-30);
 
+    /* ── Green primitive scale ────────────────────────────── */
+    --green-100: oklch(0.28 0.06 163);
+    --green-80: oklch(0.36 0.05 163);
+    --green-60: oklch(0.50 0.08 163);
+    --green-40: oklch(0.58 0.05 163);
+    --green-20: oklch(0.72 0.12 163);
+
     /* ── Semantic tokens (chromatic) ─────────────────────── */
-    --primary: oklch(0.36 0.05 163);
+    --primary: var(--green-80);
+    --primary-hover: var(--green-100);
     --secondary: oklch(0.84 0.16 90);
     --accent: oklch(0.68 0.09 280);
     --destructive: oklch(0.58 0.22 27);
-    --ring: oklch(0.58 0.05 163);
+    --ring: var(--green-40);
 
     /* Charts */
-    --chart-1: oklch(0.36 0.05 163);
+    --chart-1: var(--green-80);
     --chart-2: oklch(0.84 0.16 90);
     --chart-3: oklch(0.68 0.09 280);
-    --chart-4: oklch(0.50 0.08 163);
+    --chart-4: var(--green-60);
     --chart-5: oklch(0.75 0.12 90);
 
     --radius: 0.625rem;
@@ -70,12 +78,12 @@
     /* Sidebar */
     --sidebar: var(--neutral-20);
     --sidebar-foreground: var(--neutral-100);
-    --sidebar-primary: oklch(0.36 0.05 163);
+    --sidebar-primary: var(--green-80);
     --sidebar-primary-foreground: var(--neutral-10);
     --sidebar-accent: var(--neutral-30);
     --sidebar-accent-foreground: var(--neutral-100);
     --sidebar-border: var(--neutral-40);
-    --sidebar-ring: oklch(0.58 0.05 163);
+    --sidebar-ring: var(--green-40);
 
     /* Status colors */
     --status-paid: #45825d;
@@ -95,7 +103,8 @@
     --popover-foreground: oklch(0.93 0.008 70);
 
     /* Primary: lighter green */
-    --primary: oklch(0.72 0.12 163);
+    --primary: var(--green-20);
+    --primary-hover: var(--green-40);
     --primary-foreground: oklch(0.18 0.01 70);
 
     /* Secondary: muted yellow */
@@ -113,24 +122,24 @@
 
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.58 0.08 163);
+    --ring: var(--green-40);
 
     /* Charts */
-    --chart-1: oklch(0.72 0.12 163);
+    --chart-1: var(--green-20);
     --chart-2: oklch(0.84 0.16 90);
     --chart-3: oklch(0.74 0.10 280);
-    --chart-4: oklch(0.58 0.10 163);
+    --chart-4: var(--green-40);
     --chart-5: oklch(0.70 0.14 90);
 
     /* Sidebar */
     --sidebar: oklch(0.22 0.012 70);
     --sidebar-foreground: oklch(0.93 0.008 70);
-    --sidebar-primary: oklch(0.72 0.12 163);
+    --sidebar-primary: var(--green-20);
     --sidebar-primary-foreground: oklch(0.93 0.008 70);
     --sidebar-accent: oklch(0.26 0.01 70);
     --sidebar-accent-foreground: oklch(0.93 0.008 70);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.58 0.08 163);
+    --sidebar-ring: var(--green-40);
 
     /* Status colors (same as light for now) */
     --status-paid: #45825d;
@@ -150,6 +159,14 @@
     --color-neutral-60: var(--neutral-60);
     --color-neutral-80: var(--neutral-80);
     --color-neutral-100: var(--neutral-100);
+    /* Green primitive scale */
+    --color-green-20: var(--green-20);
+    --color-green-40: var(--green-40);
+    --color-green-60: var(--green-60);
+    --color-green-80: var(--green-80);
+    --color-green-100: var(--green-100);
+    /* Primary hover */
+    --color-primary-hover: var(--primary-hover);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

@@ -9,9 +9,12 @@ interface ColorSwatchCardProps {
 
 export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
   const displayColor = useComputedColor(entry)
-  const lightness = getLightness(displayColor)
-  const isVeryLight = lightness > 0.9
   const hexDisplay = toHex(entry.value)
+
+  // For semantic tokens, show the primitive reference instead of raw hex
+  const subtitle = entry.primitive
+    ? `← ${entry.primitive}`
+    : hexDisplay
 
   return (
     <div
@@ -25,17 +28,15 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
       <div
         className="relative h-[105px]"
         style={{ backgroundColor: displayColor }}
-      >
-        {/* outer ring on parent is enough for light swatches */}
-      </div>
+      />
 
       {/* Info block */}
       <div className="flex h-[55px] flex-col justify-center gap-0.5 bg-card px-2.5">
         <span className="truncate text-xs font-semibold text-card-foreground">
           {entry.label}
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {hexDisplay}
+        <span className="truncate font-mono text-[10px] text-muted-foreground">
+          {subtitle}
         </span>
         {entry.status === 'tokenized' && entry.token ? (
           <span className="truncate font-mono text-[10px] text-primary">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { colorRegistry, type ColorCategory, type ColorEntry } from '@/lib/color-registry'
 import { getLightness } from '@/lib/color-utils'
 import { ColorSwatchCard } from '@/components/dev/ColorSwatchCard'
@@ -68,13 +69,12 @@ export default function DevColorStyleguidePage() {
       navigator.clipboard.writeText(`var(${entry.token})`)
       toast.success(`Copied var(${entry.token})`)
     }
-    // Unresolved: popover handles itself via open state
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+    <div className="mx-auto max-w-6xl space-y-10 p-4 sm:p-6">
       {/* Header */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Button
           variant="ghost"
           size="sm"
@@ -94,20 +94,14 @@ export default function DevColorStyleguidePage() {
           </p>
         </div>
 
-        {/* Filter pills */}
-        <div className="flex gap-1.5">
-          {(['all', 'tokenized', 'unresolved'] as const).map((f) => (
-            <Button
-              key={f}
-              variant={filter === f ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilter(f)}
-              className="text-xs capitalize"
-            >
-              {f}
-            </Button>
-          ))}
-        </div>
+        {/* Filter tabs — same component as other pages */}
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="tokenized">Tokenized</TabsTrigger>
+            <TabsTrigger value="unresolved">Unresolved</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Groups */}
@@ -116,8 +110,8 @@ export default function DevColorStyleguidePage() {
         if (!entries?.length) return null
 
         return (
-          <section key={category}>
-            <h2 className="mb-3 border-b border-border pb-1.5 text-sm font-semibold text-muted-foreground">
+          <section key={category} className="space-y-4">
+            <h2 className="font-serif text-lg text-foreground">
               {CATEGORY_LABELS[category]}
             </h2>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3">
