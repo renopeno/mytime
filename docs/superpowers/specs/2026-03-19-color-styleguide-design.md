@@ -45,12 +45,23 @@ export const colorRegistry: ColorEntry[] = [
 
 **Key points:**
 - This file is data only — not imported by any production component
-- Contains every color from the audit: both tokenized and hardcoded
-- The `usedIn` field lists component filenames (not full paths) for brevity
+- Contains every color from the audit: both tokenized and hardcoded (approximately 60-70 entries total)
+- The `usedIn` field lists component filenames (not full paths) for brevity — this is a best-effort snapshot, not a live reference; it may drift as components are edited
+- The `value` field stores the **light-mode** value for tokenized colors that differ between modes. The page displays the currently active mode's computed value for tokenized entries via `getComputedStyle`, but uses the registry `value` for distance calculations
+
+**ID naming convention:**
+- Core tokens: match the CSS var name without `--`, e.g. `primary`, `muted-foreground`
+- Form colors: `form-{purpose}`, e.g. `form-border`, `form-input-bg`, `form-dialog-bg`
+- Chart colors: `chart-{n}` for tokenized, `chart-report-{color}` for hardcoded report colors
+- Client palette: `client-{color}`, e.g. `client-red`, `client-orange`, `client-slate`
+- Status: `status-{name}`, e.g. `status-paid`
+- Progress: `progress-{state}`, e.g. `progress-empty`, `progress-overtime`
+- PDF: `pdf-{purpose}`, e.g. `pdf-text`, `pdf-border`, `pdf-bg`
+- Brand: `brand-{name}`, e.g. `brand-google-blue`
 
 ### 2. Route — `/dev/colors`
 
-Lazy-loaded route, only registered when `import.meta.env.DEV` is true.
+Lazy-loaded route, only registered when `import.meta.env.DEV` is true. Nested inside the existing `AppLayout` (with sidebar) so the page feels like part of the app. No `ProtectedRoute` wrapping needed since dev mode bypasses auth anyway.
 
 ### 3. Entry Point — Settings Page
 
@@ -132,7 +143,16 @@ A small utility (`src/lib/color-utils.ts`) that:
 - Calculates OKLCH Euclidean distance between two colors
 - Parses `oklch(L C H)` strings back to numeric values
 
-This is dev-only code, doesn't need to be production-optimized.
+The hex → OKLCH conversion requires: hex → sRGB → linear RGB → XYZ (D65) → OKLAB → OKLCH. Use the `culori` library (tree-shakeable, ~8KB gzipped) as a dev dependency rather than hand-rolling the math. Since this is dev-only code, the dependency won't affect production bundle size.
+
+### 9. Swatch Click Behavior
+
+- **Unresolved swatches:** Click opens the similar-colors popover (section 7)
+- **Tokenized swatches:** Click copies the CSS variable reference (e.g. `var(--primary)`) to clipboard with a brief toast confirmation
+
+### 10. Filter State
+
+The `[All] [Tokenized] [Unresolved]` filter is component-local state (no URL persistence). Simple enough for a dev tool.
 
 ## CLAUDE.md Instruction
 
@@ -163,7 +183,8 @@ When tokenizing a previously hardcoded color:
 | `src/pages/DevColorStyleguidePage.tsx` | **Create** — the styleguide page component |
 | `src/App.tsx` (or router config) | **Modify** — add lazy `/dev/colors` route (DEV only) |
 | `src/pages/SettingsPage.tsx` | **Modify** — add "Color Styleguide" button in Development section |
-| `CLAUDE.md` | **Modify** — add Color Registry instructions |
+| `CLAUDE.md` | **Create** — project instructions file, including Color Registry section |
+| `package.json` | **Modify** — add `culori` as dev dependency |
 
 ## Out of Scope
 
