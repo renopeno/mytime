@@ -73,7 +73,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="py-5">
         <div className="flex items-center justify-between gap-2 pl-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0">
-          <div className="flex items-center gap-2 overflow-hidden transition-[opacity,width] duration-150 ease-out group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+          <div className="flex items-center gap-2 overflow-hidden transition-[opacity,width] duration-150 ease-out group-data-[collapsible=icon]:hidden">
             <span className="font-serif text-2xl font-normal tracking-tight leading-none whitespace-nowrap">MyTime</span>
             <Badge variant="secondary" className="text-[10px] tracking-wider">
               Free
