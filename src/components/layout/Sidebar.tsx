@@ -71,15 +71,15 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
 
   return (
     <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader className="py-5 group-data-[collapsible=icon]:!py-2">
-        <div className="flex items-center justify-between gap-2 pl-2 group-data-[collapsible=icon]:pl-0">
-          <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-            <span className="font-serif text-2xl font-normal tracking-tight leading-none">MyTime</span>
+      <SidebarHeader className="py-5">
+        <div className="flex items-center justify-between gap-2 pl-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:pl-0">
+          <div className="flex items-center gap-2 overflow-hidden transition-[opacity,width] duration-150 ease-out group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+            <span className="font-serif text-2xl font-normal tracking-tight leading-none whitespace-nowrap">MyTime</span>
             <Badge variant="secondary" className="text-[10px] tracking-wider">
               Free
             </Badge>
           </div>
-          <SidebarTrigger className="shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8" />
+          <SidebarTrigger className="shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
         </div>
       </SidebarHeader>
 
@@ -111,7 +111,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center" />
+              <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring transition-[padding] duration-200 ease-out group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0" />
             }
           >
             <Avatar className="h-8 w-8 shrink-0">
@@ -120,7 +120,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col min-w-0 text-left group-data-[collapsible=icon]:hidden">
+            <div className="flex flex-col min-w-0 text-left overflow-hidden transition-[opacity,width] duration-150 ease-out group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
               <span className="truncate text-sm font-medium">{fullName}</span>
               <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
             </div>
