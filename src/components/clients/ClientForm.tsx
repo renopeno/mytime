@@ -97,8 +97,8 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* General */}
-            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
-              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+            <div className="overflow-hidden rounded-[10px] border border-neutral-30 bg-neutral-10">
+              <div className="flex h-10 items-center bg-neutral-20/50 px-6">
                 <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">General</p>
               </div>
               <div className="space-y-6 p-6">
@@ -135,8 +135,8 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
             </div>
 
             {/* Billing */}
-            <div className="overflow-hidden rounded-[10px] border border-[#eae3dc] bg-[#f9f4ef]">
-              <div className="flex h-10 items-center bg-[#f0eae4]/50 px-6">
+            <div className="overflow-hidden rounded-[10px] border border-neutral-30 bg-neutral-10">
+              <div className="flex h-10 items-center bg-neutral-20/50 px-6">
                 <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">Billing</p>
               </div>
               <div className="space-y-6 p-6">

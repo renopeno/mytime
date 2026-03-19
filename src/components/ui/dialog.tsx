@@ -51,7 +51,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[14px] border border-[#eae3dc] bg-[#f9f4ef] p-8 text-sm text-sidebar-foreground shadow-lg duration-100 outline-none sm:max-w-[560px] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[14px] border border-neutral-30 bg-neutral-10 p-8 text-sm text-sidebar-foreground shadow-lg duration-100 outline-none sm:max-w-[560px] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -100,7 +100,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-8 -mb-8 flex flex-col-reverse gap-2 rounded-b-[14px] border-t border-[#eae3dc] bg-[#f4efea] px-6 py-4 sm:flex-row sm:justify-end",
+        "-mx-8 -mb-8 flex flex-col-reverse gap-2 rounded-b-[14px] border-t border-neutral-30 bg-neutral-20 px-6 py-4 sm:flex-row sm:justify-end",
         className
       )}
       {...props}

@@ -22,40 +22,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-    /* Warm cream backgrounds */
-    --background: oklch(0.97 0.008 70);
-    --foreground: oklch(0.18 0.005 70);
+    /* ── Neutral primitive scale ─────────────────────────── */
+    --neutral-10: #f9f4ef;
+    --neutral-20: #f0eae4;
+    --neutral-30: #e9e2db;
+    --neutral-40: #cfc6bc;
+    --neutral-60: #797065;
+    --neutral-80: #282017;
+    --neutral-100: #13110f;
 
-    /* Cards: same as background */
-    --card: oklch(0.97 0.008 70);
-    --card-foreground: oklch(0.18 0.005 70);
+    /* ── Semantic tokens (neutral) ───────────────────────── */
+    --background: var(--neutral-10);
+    --foreground: var(--neutral-100);
 
-    /* Popovers */
-    --popover: oklch(0.98 0.006 70);
-    --popover-foreground: oklch(0.18 0.005 70);
+    --card: var(--neutral-10);
+    --card-foreground: var(--neutral-100);
 
-    /* Primary: Dark green */
+    --popover: var(--neutral-10);
+    --popover-foreground: var(--neutral-100);
+
+    --primary-foreground: var(--neutral-10);
+    --accent-foreground: var(--neutral-10);
+    --secondary-foreground: var(--neutral-80);
+
+    --muted: var(--neutral-30);
+    --muted-foreground: var(--neutral-60);
+
+    --border: var(--neutral-30);
+    --input: var(--neutral-30);
+
+    /* ── Semantic tokens (chromatic) ─────────────────────── */
     --primary: oklch(0.36 0.05 163);
-    --primary-foreground: oklch(0.98 0.006 70);
-
-    /* Secondary: Warm yellow */
     --secondary: oklch(0.84 0.16 90);
-    --secondary-foreground: oklch(0.25 0.02 70);
-
-    /* Accent: Lilac */
     --accent: oklch(0.68 0.09 280);
-    --accent-foreground: oklch(0.98 0.006 70);
-
-    /* Muted */
-    --muted: #E9E2DB;
-    --muted-foreground: oklch(0.55 0.02 70);
-
-    /* Destructive: red */
     --destructive: oklch(0.58 0.22 27);
-
-    /* Borders */
-    --border: oklch(0.92 0.012 70);
-    --input: oklch(0.92 0.012 70);
     --ring: oklch(0.58 0.05 163);
 
     /* Charts */
@@ -68,16 +68,16 @@
     --radius: 0.625rem;
 
     /* Sidebar */
-    --sidebar: #F0EAE4;
-    --sidebar-foreground: oklch(0.18 0.005 70);
+    --sidebar: var(--neutral-20);
+    --sidebar-foreground: var(--neutral-100);
     --sidebar-primary: oklch(0.36 0.05 163);
-    --sidebar-primary-foreground: oklch(0.98 0.006 70);
-    --sidebar-accent: #E5DED7;
-    --sidebar-accent-foreground: oklch(0.18 0.005 70);
-    --sidebar-border: oklch(0.83 0.017 70);
+    --sidebar-primary-foreground: var(--neutral-10);
+    --sidebar-accent: var(--neutral-30);
+    --sidebar-accent-foreground: var(--neutral-100);
+    --sidebar-border: var(--neutral-40);
     --sidebar-ring: oklch(0.58 0.05 163);
 
-    /* Status colors (from Figma) */
+    /* Status colors */
     --status-paid: #45825d;
     --status-invoiced: #fddd74;
     --status-not-paid: #e1d4c0;
@@ -142,6 +142,14 @@
     --font-sans: 'Inter Variable', sans-serif;
     --font-serif: 'PP Editorial New', Georgia, 'Times New Roman', serif;
     --tracking-tight: -0.015em;
+    /* Neutral primitive scale */
+    --color-neutral-10: var(--neutral-10);
+    --color-neutral-20: var(--neutral-20);
+    --color-neutral-30: var(--neutral-30);
+    --color-neutral-40: var(--neutral-40);
+    --color-neutral-60: var(--neutral-60);
+    --color-neutral-80: var(--neutral-80);
+    --color-neutral-100: var(--neutral-100);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -191,7 +199,7 @@
     }
   body {
     @apply text-foreground;
-    background-color: #F0EAE4;
+    background-color: var(--neutral-20);
     }
   html {
     @apply font-sans;
@@ -211,7 +219,7 @@
     inset: 0;
     border-radius: 20px;
     padding: 1px;
-    background: linear-gradient(to bottom, #fdf5ed, #d6cec6);
+    background: linear-gradient(to bottom, var(--neutral-10), var(--neutral-40));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;

@@ -82,7 +82,7 @@ function WaveConnector({ filled }: { filled: boolean }) {
         fill="none"
         strokeWidth="1.5"
         strokeLinecap="round"
-        className="stroke-[#c5b99b] transition-[stroke-dashoffset] duration-700 ease-out"
+        className="stroke-neutral-40 transition-[stroke-dashoffset] duration-700 ease-out"
         strokeDasharray="94"
         strokeDashoffset={filled ? '0' : '94'}
       />
@@ -113,9 +113,9 @@ function StepIndicator({
               <div
                 className={`h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-300 ${
                   isCurrent
-                    ? 'bg-[#c5b99b]'
+                    ? 'bg-neutral-40'
                     : isCompleted
-                      ? 'bg-[#c5b99b]'
+                      ? 'bg-neutral-40'
                       : 'border-[1.5px] border-muted-foreground/50'
                 }`}
               />
@@ -273,7 +273,7 @@ function UploadStep({
         className={`flex w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-12 transition-colors ${
           isDragging
             ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/15 bg-[#ede8df]/40 hover:border-muted-foreground/30'
+            : 'border-muted-foreground/15 bg-neutral-30/40 hover:border-muted-foreground/30'
         }`}
       >
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">

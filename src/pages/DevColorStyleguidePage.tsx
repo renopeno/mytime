@@ -11,25 +11,23 @@ import { SimilarColorsPopover } from '@/components/dev/SimilarColorsPopover'
 type Filter = 'all' | 'tokenized' | 'unresolved'
 
 const CATEGORY_ORDER: ColorCategory[] = [
+  'primitive',
   'core',
   'status',
-  'form',
   'chart',
   'client-palette',
   'progress',
   'pdf',
-  'brand',
 ]
 
 const CATEGORY_LABELS: Record<ColorCategory, string> = {
-  core: 'Core',
+  primitive: 'Primitive Scale',
+  core: 'Core (Semantic)',
   status: 'Status',
-  form: 'Form',
   chart: 'Chart',
   'client-palette': 'Client Palette',
   progress: 'Progress',
   pdf: 'PDF',
-  brand: 'Brand',
 }
 
 export default function DevColorStyleguidePage() {
