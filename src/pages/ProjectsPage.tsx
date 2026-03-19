@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useProjects } from '@/hooks/useProjects'
 import { useProjectProgress } from '@/hooks/useProjectProgress'
+import { useSettings } from '@/hooks/useSettings'
 import { ProjectList } from '@/components/projects/ProjectList'
 import { ProjectForm } from '@/components/projects/ProjectForm'
 import type { ProjectWithClient } from '@/types/app.types'
@@ -12,6 +13,8 @@ import type { ProjectWithClient } from '@/types/app.types'
 export default function ProjectsPage() {
   const { projects, loading, deleteProject, updateProject, refetch } = useProjects()
   const { loggedMinutes } = useProjectProgress()
+  const { settings } = useSettings()
+  const defaultRate = settings?.default_hourly_rate ?? 0
   const [formOpen, setFormOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<ProjectWithClient | null>(null)
 
@@ -125,6 +128,7 @@ export default function ProjectsPage() {
             onToggleComplete={handleToggleComplete}
             onBulkDelete={handleBulkDelete}
             onBulkToggleComplete={handleBulkToggleComplete}
+            defaultRate={defaultRate}
           />
         </TabsContent>
 
@@ -138,6 +142,7 @@ export default function ProjectsPage() {
             onToggleComplete={handleToggleComplete}
             onBulkDelete={handleBulkDelete}
             onBulkToggleComplete={handleBulkToggleComplete}
+            defaultRate={defaultRate}
           />
         </TabsContent>
       </Tabs>
@@ -147,6 +152,7 @@ export default function ProjectsPage() {
         onOpenChange={setFormOpen}
         project={editingProject}
         onSuccess={handleFormSuccess}
+        defaultRate={defaultRate}
       />
     </div>
   )

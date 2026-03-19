@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/form'
 import { ClientSelect } from '@/components/clients/ClientSelect'
 import { useProjects } from '@/hooks/useProjects'
+import { useClients } from '@/hooks/useClients'
+import { formatCurrency } from '@/lib/format'
 import type { ProjectWithClient } from '@/types/app.types'
 
 const projectSchema = z.object({
@@ -43,11 +45,13 @@ interface ProjectFormProps {
   onOpenChange: (open: boolean) => void
   project?: ProjectWithClient | null
   onSuccess: () => void
+  defaultRate: number
 }
 
-export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectFormProps) {
+export function ProjectForm({ open, onOpenChange, project, onSuccess, defaultRate }: ProjectFormProps) {
   const isEditing = !!project
   const { createProject, updateProject } = useProjects()
+  const { clients } = useClients()
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -60,6 +64,10 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
       is_archived: false,
     },
   })
+
+  const watchedClientId = form.watch('client_id')
+  const selectedClient = clients.find((c) => c.id === watchedClientId) ?? null
+  const effectiveRate = selectedClient?.hourly_rate ?? defaultRate
 
   useEffect(() => {
     if (open) {
@@ -183,7 +191,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="Uses default rate"
+                          placeholder={`Default: ${formatCurrency(effectiveRate)}`}
                           value={field.value ?? ''}
                           onChange={(e) => {
                             const val = e.target.value
@@ -192,7 +200,9 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                         />
                       </FormControl>
                       {!field.value && (
-                        <FormDescription>Uses client or default rate</FormDescription>
+                        <FormDescription>
+                          Will use {selectedClient ? `${selectedClient.name}'s rate` : 'default rate'}: {formatCurrency(effectiveRate)}/hr
+                        </FormDescription>
                       )}
                       <FormMessage />
                     </FormItem>

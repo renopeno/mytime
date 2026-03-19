@@ -37,6 +37,7 @@ interface ProjectListProps {
   onToggleComplete: (project: ProjectWithClient) => void
   onBulkDelete: (ids: string[]) => void
   onBulkToggleComplete: (projects: ProjectWithClient[]) => void
+  defaultRate: number
 }
 
 export function ProjectList({
@@ -48,6 +49,7 @@ export function ProjectList({
   onToggleComplete,
   onBulkDelete,
   onBulkToggleComplete,
+  defaultRate,
 }: ProjectListProps) {
   const isMobile = useIsMobile()
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -247,11 +249,7 @@ export function ProjectList({
                 )}
               </TableCell>
               <TableCell>
-                {project.hourly_rate ? (
-                  formatCurrency(project.hourly_rate)
-                ) : (
-                  <span className="text-muted-foreground">Default</span>
-                )}
+                {formatCurrency(project.hourly_rate ?? project.client?.hourly_rate ?? defaultRate)}
               </TableCell>
               <TableCell>
                 {(() => {
