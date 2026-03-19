@@ -25,9 +25,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { ColorSwatchPicker, SWATCH_COLORS } from '@/components/ui/color-swatch-picker'
 
 const clientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
+  color: z.string(),
   hourly_rate: z.number().nullable(),
   is_active: z.boolean(),
 })
@@ -49,6 +51,7 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: '',
+      color: SWATCH_COLORS[0].hex,
       hourly_rate: null,
       is_active: true,
     },
@@ -58,6 +61,7 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
     if (open) {
       form.reset({
         name: client?.name ?? '',
+        color: client?.color ?? SWATCH_COLORS[0].hex,
         hourly_rate: client?.hourly_rate ?? null,
         is_active: client?.is_active ?? true,
       })
@@ -106,6 +110,22 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
                       <FormLabel>Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Client name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Color</FormLabel>
+                      <FormControl>
+                        <ColorSwatchPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

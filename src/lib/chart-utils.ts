@@ -31,7 +31,7 @@ interface EntryInput {
  */
 export function getGroupingMode(from: Date, to: Date): GroupingMode {
   const days = differenceInDays(to, from)
-  if (days <= 14) return 'daily'
+  if (days <= 35) return 'daily'
   if (days <= 90) return 'weekly'
   return 'monthly'
 }

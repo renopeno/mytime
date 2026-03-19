@@ -84,7 +84,7 @@ export default function ProjectsPage() {
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-medium tracking-tight">Projects</h1>
+          <h1 className="font-serif text-3xl font-normal tracking-tight">Projects</h1>
           <p className="text-sm text-muted-foreground">
             Organize work by client and track progress
           </p>

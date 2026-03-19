@@ -33,9 +33,9 @@ interface ClientListProps {
   clients: Client[]
   emptyMessage?: string
   onEdit: (client: Client) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string, cascade?: boolean) => void
   onToggleActive: (client: Client) => void
-  onBulkDelete: (ids: string[]) => void
+  onBulkDelete: (ids: string[], cascade?: boolean) => void
   onBulkToggleActive: (clients: Client[]) => void
 }
 
@@ -50,7 +50,9 @@ export function ClientList({
 }: ClientListProps) {
   const isMobile = useIsMobile()
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [cascadeDelete, setCascadeDelete] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [bulkCascadeDelete, setBulkCascadeDelete] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export function ClientList({
             <><UserPlus className="mr-1.5 h-3.5 w-3.5" />Reactivate</>
           )}
         </Button>
-        <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialog open={bulkDeleteOpen} onOpenChange={(open) => { setBulkDeleteOpen(open); if (!open) setBulkCascadeDelete(false) }}>
           <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" />}>
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Delete
@@ -113,12 +115,24 @@ export function ClientList({
                 Are you sure you want to delete the selected clients? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
+              <Checkbox
+                checked={bulkCascadeDelete}
+                onCheckedChange={(v) => setBulkCascadeDelete(v === true)}
+                className="mt-0.5"
+              />
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium leading-none">Also delete projects & time entries</p>
+                <p className="text-xs text-muted-foreground">Remove all projects and tracked time associated with these clients</p>
+              </div>
+            </label>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  onBulkDelete(Array.from(selected))
+                  onBulkDelete(Array.from(selected), bulkCascadeDelete)
                   setSelected(new Set())
+                  setBulkCascadeDelete(false)
                 }}
               >
                 Delete
@@ -172,7 +186,7 @@ export function ClientList({
           </div>
         ))}
 
-        <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) { setDeleteId(null); setCascadeDelete(false) } }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Client</AlertDialogTitle>
@@ -180,13 +194,25 @@ export function ClientList({
                 Are you sure you want to delete this client? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
+              <Checkbox
+                checked={cascadeDelete}
+                onCheckedChange={(v) => setCascadeDelete(v === true)}
+                className="mt-0.5"
+              />
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium leading-none">Also delete projects & time entries</p>
+                <p className="text-xs text-muted-foreground">Remove all projects and tracked time associated with this client</p>
+              </div>
+            </label>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
                   if (deleteId) {
-                    onDelete(deleteId)
+                    onDelete(deleteId, cascadeDelete)
                     setDeleteId(null)
+                    setCascadeDelete(false)
                   }
                 }}
               >
@@ -259,7 +285,7 @@ export function ClientList({
         </TableBody>
       </Table>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) { setDeleteId(null); setCascadeDelete(false) } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
@@ -267,13 +293,25 @@ export function ClientList({
               Are you sure you want to delete this client? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <label className="flex items-start gap-3 rounded-md border p-3 cursor-pointer">
+            <Checkbox
+              checked={cascadeDelete}
+              onCheckedChange={(v) => setCascadeDelete(v === true)}
+              className="mt-0.5"
+            />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium leading-none">Also delete projects & time entries</p>
+              <p className="text-xs text-muted-foreground">Remove all projects and tracked time associated with this client</p>
+            </div>
+          </label>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deleteId) {
-                  onDelete(deleteId)
+                  onDelete(deleteId, cascadeDelete)
                   setDeleteId(null)
+                  setCascadeDelete(false)
                 }
               }}
             >

@@ -90,6 +90,7 @@ export interface Database {
           id: string
           user_id: string
           name: string
+          color: string
           hourly_rate: number | null
           is_active: boolean
           created_at: string
@@ -99,6 +100,7 @@ export interface Database {
           id?: string
           user_id: string
           name: string
+          color?: string
           hourly_rate?: number | null
           is_active?: boolean
           created_at?: string
@@ -108,6 +110,7 @@ export interface Database {
           id?: string
           user_id?: string
           name?: string
+          color?: string
           hourly_rate?: number | null
           is_active?: boolean
           created_at?: string
@@ -130,7 +133,6 @@ export interface Database {
           client_id: string | null
           name: string
           description: string | null
-          color: string
           type: string
           is_archived: boolean
           hourly_rate: number | null
@@ -144,7 +146,6 @@ export interface Database {
           client_id?: string | null
           name: string
           description?: string | null
-          color?: string
           type?: string
           is_archived?: boolean
           hourly_rate?: number | null
@@ -158,7 +159,6 @@ export interface Database {
           client_id?: string | null
           name?: string
           description?: string | null
-          color?: string
           type?: string
           is_archived?: boolean
           hourly_rate?: number | null

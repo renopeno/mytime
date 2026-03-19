@@ -21,6 +21,7 @@ export interface DashboardData {
   totalAmount: number
   workingDays: number
   totalWorkingDays: number
+  activeProjects: number
   billingBreakdown: {
     notPaid: number
     invoiceSent: number
@@ -47,6 +48,7 @@ const EMPTY_DATA: DashboardData = {
   totalAmount: 0,
   workingDays: 0,
   totalWorkingDays: 0,
+  activeProjects: 0,
   billingBreakdown: { notPaid: 0, invoiceSent: 0, paid: 0 },
   byProject: [],
   byClient: [],
@@ -140,7 +142,7 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
 
         // By project
         const projectName = project?.name ?? 'No Project'
-        const projectColor = project?.color ?? ''
+        const projectColor = project?.client?.color ?? '#6789b9'
         const existing = projectMap.get(projectName)
         if (existing) {
           existing.minutes += minutes
@@ -173,15 +175,20 @@ export function useDashboardData(filters: DashboardFilters): DashboardData {
         })
       }
 
-      // Count Mon–Fri days in the selected date range
-      const totalWorkingDays = eachDayOfInterval({ start: filters.from, end: filters.to })
-        .filter((d) => !isWeekend(d)).length
+      // Count Mon–Fri days in the selected date range, capped at today
+      const today = new Date()
+      const rangeEnd = filters.to > today ? today : filters.to
+      const totalWorkingDays = rangeEnd >= filters.from
+        ? eachDayOfInterval({ start: filters.from, end: rangeEnd })
+            .filter((d) => !isWeekend(d)).length
+        : 0
 
       setData({
         totalMinutes,
         totalAmount,
         workingDays: uniqueDates.size,
         totalWorkingDays,
+        activeProjects: projectMap.size,
         billingBreakdown,
         byProject: Array.from(projectMap.values()),
         byClient: Array.from(clientMap.values()),

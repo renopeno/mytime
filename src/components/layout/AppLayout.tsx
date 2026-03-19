@@ -5,6 +5,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 import { PanelLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 function MobileHeader() {
   const { toggleSidebar } = useSidebar()
@@ -12,10 +13,10 @@ function MobileHeader() {
   return (
     <header className="flex items-center justify-between bg-sidebar px-4 py-3 md:hidden">
       <div className="flex items-center gap-2">
-        <span className="font-serif text-xl font-medium tracking-tight leading-none">MyTime</span>
-        <span className="shrink-0 rounded-full bg-secondary px-1.5 py-px text-[8px] font-semibold text-secondary-foreground uppercase tracking-wider">
+        <span className="font-serif text-xl font-normal tracking-tight leading-none">MyTime</span>
+        <Badge variant="secondary" className="text-[10px] tracking-wider">
           Free
-        </span>
+        </Badge>
       </div>
       <Button
         variant="ghost"

@@ -109,7 +109,7 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate,
               <span className="flex items-center gap-1.5 text-sm font-medium">
                 <span
                   className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: entry.project.color }}
+                  style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
                 />
                 <span className="truncate">{entry.project.name}</span>
               </span>
@@ -230,7 +230,7 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate,
               <span className="flex items-center gap-1.5 text-sm">
                 <span
                   className="inline-block h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: entry.project.color }}
+                  style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
                 />
                 <span className="truncate">{entry.project.name}</span>
               </span>

@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v7'
+const DEV_DB_VERSION = 'v10'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -52,22 +52,22 @@ function buildSeed() {
   const pMobile = uid(), pBrandId = uid(), pEcomPlat = uid()
 
   const clients: Client[] = [
-    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',    hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',      hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',    hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
-    { id: cStartup, user_id: DEV_USER_ID, name: 'Startup Hub',    hourly_rate: 55,   is_active: true, created_at: now(), updated_at: now() },
-    { id: cDesign,  user_id: DEV_USER_ID, name: 'Design Studio',  hourly_rate: 70,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cAcme,    user_id: DEV_USER_ID, name: 'Acme d.o.o.',    color: '#5b8bfc', hourly_rate: 80,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cTech,    user_id: DEV_USER_ID, name: 'TechStart',      color: '#b35cf6', hourly_rate: 65,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cStudio,  user_id: DEV_USER_ID, name: 'Studio Noir',    color: '#f6b03a', hourly_rate: null, is_active: true, created_at: now(), updated_at: now() },
+    { id: cStartup, user_id: DEV_USER_ID, name: 'Startup Hub',    color: '#96c46e', hourly_rate: 55,   is_active: true, created_at: now(), updated_at: now() },
+    { id: cDesign,  user_id: DEV_USER_ID, name: 'Design Studio',  color: '#f155ab', hourly_rate: 70,   is_active: true, created_at: now(), updated_at: now() },
   ]
 
   const projects: Project[] = [
-    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,    name: 'Website Redesign',    description: 'Kompletni redizajn web stranice',       color: '#3b82f6', type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
-    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,    name: 'E-commerce',          description: 'Shopify integracija i custom cart',      color: '#0ea5e9', type: 'webshop',        is_archived: false, hourly_rate: 90,   estimated_hours: 5,    created_at: now(), updated_at: now() },
-    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,    name: 'MVP razvoj',          description: 'React + Node.js MVP',                    color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 65,   estimated_hours: 20,   created_at: now(), updated_at: now() },
-    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio,  name: 'Brand identitet',     description: 'Logo, boje, tipografija',                color: '#f59e0b', type: 'deck_design',   is_archived: false, hourly_rate: null, estimated_hours: 4,    created_at: now(), updated_at: now() },
-    { id: pInternal, user_id: DEV_USER_ID, client_id: null,     name: 'Interni zadaci',      description: null,                                     color: '#6b7280', type: 'web_design',     is_archived: false, hourly_rate: null, estimated_hours: null, created_at: now(), updated_at: now() },
-    { id: pMobile,   user_id: DEV_USER_ID, client_id: cStartup, name: 'Mobile App',          description: 'React Native mobile application',        color: '#8b5cf6', type: 'product_design', is_archived: false, hourly_rate: 60,   estimated_hours: 40,   created_at: now(), updated_at: now() },
-    { id: pBrandId,  user_id: DEV_USER_ID, client_id: cDesign,  name: 'Brand Identity',      description: 'Full brand identity package',             color: '#ec4899', type: 'product_design', is_archived: false, hourly_rate: 75,   estimated_hours: 15,   created_at: now(), updated_at: now() },
-    { id: pEcomPlat, user_id: DEV_USER_ID, client_id: cTech,    name: 'E-commerce Platform', description: 'Custom e-commerce platform build',        color: '#06b6d4', type: 'webshop',        is_archived: false, hourly_rate: 50,   estimated_hours: 30,   created_at: now(), updated_at: now() },
+    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,    name: 'Website Redesign',    description: 'Kompletni redizajn web stranice',       type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
+    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,    name: 'E-commerce',          description: 'Shopify integracija i custom cart',      type: 'webshop',        is_archived: false, hourly_rate: 90,   estimated_hours: 5,    created_at: now(), updated_at: now() },
+    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,    name: 'MVP razvoj',          description: 'React + Node.js MVP',                    type: 'product_design', is_archived: false, hourly_rate: 65,   estimated_hours: 20,   created_at: now(), updated_at: now() },
+    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio,  name: 'Brand identitet',     description: 'Logo, boje, tipografija',                type: 'deck_design',   is_archived: false, hourly_rate: null, estimated_hours: 4,    created_at: now(), updated_at: now() },
+    { id: pInternal, user_id: DEV_USER_ID, client_id: null,     name: 'Interni zadaci',      description: null,                                     type: 'web_design',     is_archived: false, hourly_rate: null, estimated_hours: null, created_at: now(), updated_at: now() },
+    { id: pMobile,   user_id: DEV_USER_ID, client_id: cStartup, name: 'Mobile App',          description: 'React Native mobile application',        type: 'product_design', is_archived: false, hourly_rate: 60,   estimated_hours: 40,   created_at: now(), updated_at: now() },
+    { id: pBrandId,  user_id: DEV_USER_ID, client_id: cDesign,  name: 'Brand Identity',      description: 'Full brand identity package',             type: 'product_design', is_archived: false, hourly_rate: 75,   estimated_hours: 15,   created_at: now(), updated_at: now() },
+    { id: pEcomPlat, user_id: DEV_USER_ID, client_id: cTech,    name: 'E-commerce Platform', description: 'Custom e-commerce platform build',        type: 'webshop',        is_archived: false, hourly_rate: 50,   estimated_hours: 30,   created_at: now(), updated_at: now() },
   ]
 
   const timeEntries: TimeEntry[] = [
@@ -172,7 +172,20 @@ export function devUpdateClient(id: string, updates: Partial<Client>): void {
   save(KEYS.clients, clients)
 }
 
-export function devDeleteClient(id: string): void {
+export function devDeleteClient(id: string, cascade = false): void {
+  if (cascade) {
+    const projects = load<Project>(KEYS.projects).filter(p => p.client_id === id)
+    const projectIds = new Set(projects.map(p => p.id))
+    // Delete time entries belonging to this client's projects
+    save(KEYS.timeEntries, load<TimeEntry>(KEYS.timeEntries).filter(e => !e.project_id || !projectIds.has(e.project_id)))
+    // Delete the projects
+    save(KEYS.projects, load<Project>(KEYS.projects).filter(p => p.client_id !== id))
+  } else {
+    // Nullify client_id on projects so they become unassigned
+    save(KEYS.projects, load<Project>(KEYS.projects).map(p =>
+      p.client_id === id ? { ...p, client_id: null, updated_at: now() } : p
+    ))
+  }
   save(KEYS.clients, load<Client>(KEYS.clients).filter(c => c.id !== id))
 }
 

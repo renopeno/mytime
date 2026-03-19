@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { startOfMonth, endOfMonth, parseISO, format } from 'date-fns'
+import { startOfMonth, endOfMonth, parseISO, format, getDay, eachDayOfInterval } from 'date-fns'
 import { toast } from 'sonner'
-import { FileText, ArrowLeftRight, ChevronDown } from 'lucide-react'
+import { FileText, ArrowLeftRight, ChevronDown, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,6 +16,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import type { DateRange } from '@/components/ui/date-range-picker'
 import { useDashboardData } from '@/hooks/useDashboardData'
@@ -28,6 +29,8 @@ import type { GroupedDataPoint } from '@/lib/chart-utils'
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -37,6 +40,8 @@ import {
 } from 'recharts'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
+
+const ACCENT = '#6366f1'
 
 const DEFAULT_COLORS = [
   '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
@@ -210,24 +215,40 @@ function KPICards({
   const amountDelta = compareMode && compareData ? computeDelta(totalAmount, compareData.totalAmount) : null
   const daysDelta = compareMode && compareData ? computeDelta(activeRatio, compareActiveRatio) : null
 
-  const avgHourlyRate = totalMinutes > 0 ? totalAmount / (totalMinutes / 60) : 0
-  const compareAvgHourlyRate = compareMode && compareData && compareData.totalMinutes > 0
-    ? compareData.totalAmount / (compareData.totalMinutes / 60)
-    : 0
-  const rateDelta = compareMode && compareData ? computeDelta(avgHourlyRate, compareAvgHourlyRate) : null
+  const activeProjects = data.activeProjects
+  const compareActiveProjects = compareMode && compareData ? compareData.activeProjects : 0
+  const projectsDelta = compareMode && compareData ? computeDelta(activeProjects, compareActiveProjects) : null
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 py-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:py-0 lg:grid-cols-4 [&>*]:min-w-[200px] [&>*]:shrink-0 sm:[&>*]:min-w-0 sm:[&>*]:shrink [&_[data-slot=card-header]]:[container-type:normal] sm:[&_[data-slot=card-header]]:[container-type:inline-size]">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Hours</CardTitle>
+          <CardTitle className="whitespace-nowrap text-sm font-normal text-muted-foreground sm:whitespace-normal">Active Projects</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto">
           {loading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-medium">{formatHoursMinutes(totalMinutes)}</p>
+              <p className="whitespace-nowrap font-serif text-2xl font-normal">{activeProjects}</p>
+              {compareMode && !compareLoading && projectsDelta && (
+                <span className={`text-sm font-medium ${deltaColorClass(projectsDelta)}`}>{projectsDelta}</span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="whitespace-nowrap text-sm font-normal text-muted-foreground sm:whitespace-normal">Total Hours</CardTitle>
+        </CardHeader>
+        <CardContent className="mt-auto">
+          {loading ? (
+            <Skeleton className="h-8 w-24" />
+          ) : (
+            <div className="flex items-baseline gap-2">
+              <p className="whitespace-nowrap font-serif text-2xl font-normal">{formatHoursMinutes(totalMinutes)}</p>
               {compareMode && !compareLoading && minutesDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(minutesDelta)}`}>{minutesDelta}</span>
               )}
@@ -238,14 +259,14 @@ function KPICards({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Earned</CardTitle>
+          <CardTitle className="whitespace-nowrap text-sm font-normal text-muted-foreground sm:whitespace-normal">Total Earned</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto">
           {loading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-medium">{formatCurrency(totalAmount)}</p>
+              <p className="whitespace-nowrap font-serif text-2xl font-normal">{formatCurrency(totalAmount)}</p>
               {compareMode && !compareLoading && amountDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(amountDelta)}`}>{amountDelta}</span>
               )}
@@ -256,34 +277,28 @@ function KPICards({
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Days Active</CardTitle>
+          <CardTitle className="flex items-center gap-1.5 whitespace-nowrap text-sm font-normal text-muted-foreground sm:whitespace-normal">
+            Working Days Active
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger render={<span className="inline-flex cursor-help" />}>
+                  <Info className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Percentage of weekdays (Mon–Fri) in the selected period where you logged any time.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto">
           {loading ? (
             <Skeleton className="h-8 w-24" />
           ) : (
             <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-medium">{activeRatio}%</p>
+              <p className="whitespace-nowrap font-serif text-2xl font-normal">{activeRatio}%</p>
               {compareMode && !compareLoading && daysDelta && (
                 <span className={`text-sm font-medium ${deltaColorClass(daysDelta)}`}>{daysDelta}</span>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Avg Hourly Rate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="h-8 w-24" />
-          ) : (
-            <div className="flex items-baseline gap-2">
-              <p className="font-serif text-2xl font-medium">{formatCurrency(avgHourlyRate)}</p>
-              {compareMode && !compareLoading && rateDelta && (
-                <span className={`text-sm font-medium ${deltaColorClass(rateDelta)}`}>{rateDelta}</span>
               )}
             </div>
           )}
@@ -317,28 +332,23 @@ function LayeredRingChart({
   const total = segments.reduce((sum, s) => sum + s.value, 0)
   const cx = size / 2
   const cy = size / 2
-  const gapAngleDeg = 3
-  const gapFraction = gapAngleDeg / 360
 
   if (total === 0) return null
 
-  // Build arcs: each segment gets a fraction of the circumference, minus gap
-  let cumulativeOffset = 0
-  const arcs = segments
-    .filter((s) => s.value > 0)
-    .map((seg, i) => {
-      const fraction = seg.value / total
-      const minArc = strokeWidth * 2
-      const arcLength = Math.max(minArc, (fraction - gapFraction) * circumference)
-      const offset = cumulativeOffset
-      cumulativeOffset += fraction * circumference
-      return {
-        ...seg,
-        index: i,
-        arcLength,
-        dashOffset: -offset - (gapFraction / 2) * circumference,
-      }
-    })
+  const filtered = segments.filter((s) => s.value > 0)
+
+  // Build arcs with natural positions (no overlap tricks on the bodies)
+  let cumulativeLength = 0
+  const arcs = filtered.map((seg, i) => {
+    const fraction = seg.value / total
+    const segLength = fraction * circumference
+    const naturalStart = cumulativeLength
+    cumulativeLength += segLength
+    return { ...seg, index: i, segLength, naturalStart }
+  })
+
+  // End-cap length: a short arc at each segment's tail, rendered with round caps
+  const capLen = strokeWidth * 1.2
 
   return (
     <div
@@ -356,20 +366,55 @@ function LayeredRingChart({
           className="text-muted/40"
           strokeWidth={strokeWidth * 0.6}
         />
-        {/* Segment arcs — reversed: earlier segments on top, each END overlaps next START */}
-        {[...arcs].reverse().map((arc) => {
+        {/*
+          Two-layer approach:
+          Layer 1 — Flat bodies: every segment at its exact natural position
+          with butt caps so no segment bleeds into its neighbours.
+          Layer 2 — Rounded end caps: a short arc at the tail of each segment
+          rendered in reverse order (last = bottom, first = top) so each
+          segment's rounded end overlaps the next segment's start.
+        */}
+        {/* Layer 1: flat segment bodies */}
+        {arcs.map((arc) => {
           const isSelected = activeIndex != null && activeIndex === arc.index
           return (
             <circle
-              key={arc.name}
+              key={`body-${arc.name}`}
               cx={cx}
               cy={cy}
               r={radius}
               fill="none"
               stroke={arc.color}
               strokeWidth={strokeWidth}
-              strokeDasharray={`${arc.arcLength} ${circumference - arc.arcLength}`}
-              strokeDashoffset={arc.dashOffset}
+              strokeDasharray={`${arc.segLength} ${circumference - arc.segLength}`}
+              strokeDashoffset={-arc.naturalStart}
+              strokeLinecap="butt"
+              transform={`rotate(-90 ${cx} ${cy})`}
+              className={[
+                'transition-[filter] duration-200',
+                isSelected ? '[filter:brightness(0.82)]' : '',
+                onSegmentClick ? 'cursor-pointer hover:[filter:brightness(0.82)]' : '',
+              ].join(' ')}
+              onClick={() => onSegmentClick?.(arc.index)}
+            />
+          )
+        })}
+        {/* Layer 2: rounded end caps, reversed so each cap sits above the next segment */}
+        {[...arcs].reverse().map((arc) => {
+          const isSelected = activeIndex != null && activeIndex === arc.index
+          // Position the cap at the END of the segment
+          const capStart = arc.naturalStart + arc.segLength - capLen
+          return (
+            <circle
+              key={`cap-${arc.name}`}
+              cx={cx}
+              cy={cy}
+              r={radius}
+              fill="none"
+              stroke={arc.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${capLen} ${circumference - capLen}`}
+              strokeDashoffset={-capStart}
               strokeLinecap="round"
               transform={`rotate(-90 ${cx} ${cy})`}
               className={[
@@ -386,7 +431,7 @@ function LayeredRingChart({
       {(centerLabel || centerValue) && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           {centerLabel && <span className="text-xs text-muted-foreground transition-all duration-200">{centerLabel}</span>}
-          {centerValue && <span className="font-serif text-lg font-medium transition-all duration-200">{centerValue}</span>}
+          {centerValue && <span className="font-serif text-lg font-normal transition-all duration-200">{centerValue}</span>}
         </div>
       )}
     </div>
@@ -434,8 +479,8 @@ function BillingDonutChart({
         {total === 0 ? (
           <NoData />
         ) : (
-          <div className="flex items-center gap-8">
-            <div className="shrink-0">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-8">
+            <div className="shrink-0 self-center">
               <LayeredRingChart
                 segments={segments}
                 centerLabel={activeSegment?.name ?? 'Total'}
@@ -444,8 +489,8 @@ function BillingDonutChart({
                 onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
-            {/* Legend — with percentages, click only */}
-            <div className="flex flex-col gap-3 min-w-0 flex-1">
+            {/* Legend: horizontal wrap on mobile, vertical column on sm+ */}
+            <div className="@container flex flex-wrap justify-center gap-x-1 gap-y-1 sm:flex-col sm:gap-3 sm:min-w-0 sm:flex-1">
               {allStatuses.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
                 const isActive = segIdx >= 0 && segIdx === selectedIndex
@@ -453,17 +498,17 @@ function BillingDonutChart({
                 return (
                   <button
                     key={item.name}
-                    className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
+                    className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-left transition-colors duration-150 hover:bg-muted/50 sm:gap-2.5 sm:py-1.5 ${isActive ? 'bg-muted/50' : ''}`}
                     onClick={() => segIdx >= 0 && setSelectedIndex(prev => prev === segIdx ? null : segIdx)}
                   >
                     <span
-                      className="inline-block h-3 w-3 shrink-0 rounded-full"
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className={`text-sm transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`text-sm whitespace-nowrap sm:truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
                     </span>
-                    <span className={`ml-auto shrink-0 text-sm tabular-nums transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`hidden shrink-0 text-sm tabular-nums transition-colors duration-150 @[10rem]:inline ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {pct}%
                     </span>
                   </button>
@@ -477,9 +522,46 @@ function BillingDonutChart({
   )
 }
 
-// ─── Earnings Donut Chart (By Project / By Client) ──────────────────────────
+// ─── Earnings Donut Chart (By Client / Project) ─────────────────────────────
 
-const OTHER_THRESHOLD = 0.05
+const MIN_SEGMENT_THRESHOLD = 0.05
+
+type EarningsGrouping = 'client' | 'project'
+
+function buildEarningsSegments(
+  items: Array<{ name: string; amount: number; color?: string }>,
+) {
+  const sorted = [...items]
+    .map((item, index) => ({
+      name: item.name,
+      amount: Math.round(item.amount * 100) / 100,
+      color: getColor(item.color, index),
+    }))
+    .sort((a, b) => b.amount - a.amount)
+
+  const total = sorted.reduce((sum, s) => sum + s.amount, 0)
+  if (total === 0) return { segments: [], legendItems: [] }
+
+  const main: Array<{ name: string; value: number; color: string }> = []
+  let otherAmount = 0
+  const legend: Array<{ name: string; amount: number; color: string }> = []
+
+  for (const item of sorted) {
+    if (item.amount / total < MIN_SEGMENT_THRESHOLD && sorted.length > 3) {
+      otherAmount += item.amount
+    } else {
+      main.push({ name: item.name, value: item.amount, color: item.color })
+      legend.push({ name: item.name, amount: item.amount, color: item.color })
+    }
+  }
+
+  if (otherAmount > 0) {
+    main.push({ name: 'Other', value: Math.round(otherAmount * 100) / 100, color: '#c4b5a0' })
+    legend.push({ name: 'Other', amount: Math.round(otherAmount * 100) / 100, color: '#c4b5a0' })
+  }
+
+  return { segments: main, legendItems: legend }
+}
 
 function EarningsDonutChart({
   data,
@@ -488,61 +570,42 @@ function EarningsDonutChart({
   data: DashboardData
   loading: boolean
 }) {
-  const { segments, legendItems } = useMemo(() => {
-    const items = data.byClient
-    const sorted = [...items]
-      .map((item, index) => {
-        const color = 'color' in item ? getColor(item.color as string | undefined, index) : getColor(undefined, index)
-        return {
-          name: item.name,
-          amount: Math.round(item.amount * 100) / 100,
-          color,
-        }
-      })
-      .sort((a, b) => b.amount - a.amount)
-
-    const total = sorted.reduce((sum, s) => sum + s.amount, 0)
-    if (total === 0) return { segments: [], legendItems: [] }
-
-    const main: Array<{ name: string; value: number; color: string }> = []
-    let otherAmount = 0
-    const legend: Array<{ name: string; amount: number; color: string }> = []
-
-    for (const item of sorted) {
-      if (item.amount / total < OTHER_THRESHOLD && sorted.length > 3) {
-        otherAmount += item.amount
-      } else {
-        main.push({ name: item.name, value: item.amount, color: item.color })
-        legend.push({ name: item.name, amount: item.amount, color: item.color })
-      }
-    }
-
-    if (otherAmount > 0) {
-      main.push({ name: 'Other', value: Math.round(otherAmount * 100) / 100, color: '#a0a0a0' })
-      legend.push({ name: 'Other', amount: Math.round(otherAmount * 100) / 100, color: '#a0a0a0' })
-    }
-
-    return { segments: main, legendItems: legend }
-  }, [data.byClient])
-
-  const total = segments.reduce((sum, s) => sum + s.value, 0)
+  const [grouping, setGrouping] = useState<EarningsGrouping>('client')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
+  const { segments, legendItems } = useMemo(() => {
+    const items = grouping === 'project' ? data.byProject : data.byClient
+    return buildEarningsSegments(items)
+  }, [data.byProject, data.byClient, grouping])
+
+  // Reset selection when switching grouping
+  const prevGrouping = useMemo(() => grouping, [grouping])
+  useMemo(() => { if (prevGrouping !== grouping) setSelectedIndex(null) }, [grouping, prevGrouping])
+
+  const total = segments.reduce((sum, s) => sum + s.value, 0)
   const activeSegment = selectedIndex != null ? segments[selectedIndex] : null
 
   if (loading) return <Skeleton className="h-[350px] w-full" />
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-medium">Earnings by Client</CardTitle>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+        <CardTitle className="text-base font-medium">Earnings</CardTitle>
+        <SegmentControl
+          options={[
+            { value: 'client' as EarningsGrouping, label: 'Client' },
+            { value: 'project' as EarningsGrouping, label: 'Project' },
+          ]}
+          value={grouping}
+          onChange={(v) => { setGrouping(v); setSelectedIndex(null) }}
+        />
       </CardHeader>
       <CardContent>
         {segments.length === 0 ? (
           <NoData />
         ) : (
-          <div className="flex items-center gap-8">
-            <div className="shrink-0">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:gap-8">
+            <div className="shrink-0 self-center">
               <LayeredRingChart
                 segments={segments}
                 centerLabel={activeSegment?.name ?? 'Total'}
@@ -551,8 +614,8 @@ function EarningsDonutChart({
                 onSegmentClick={(i) => setSelectedIndex(prev => prev === i ? null : i)}
               />
             </div>
-            {/* Legend — with percentages, click only */}
-            <div className="flex flex-col gap-2 min-w-0 flex-1">
+            {/* Legend: horizontal wrap on mobile, vertical column on sm+ */}
+            <div className="@container flex flex-wrap justify-center gap-x-1 gap-y-1 sm:flex-col sm:gap-2 sm:min-w-0 sm:flex-1">
               {legendItems.map((item) => {
                 const segIdx = segments.findIndex(s => s.name === item.name)
                 const isActive = segIdx >= 0 && segIdx === selectedIndex
@@ -560,17 +623,17 @@ function EarningsDonutChart({
                 return (
                   <button
                     key={item.name}
-                    className={`flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors duration-150 hover:bg-muted/50 ${isActive ? 'bg-muted/50' : ''}`}
+                    className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-left transition-colors duration-150 hover:bg-muted/50 sm:gap-2.5 sm:py-1.5 ${isActive ? 'bg-muted/50' : ''}`}
                     onClick={() => segIdx >= 0 && setSelectedIndex(prev => prev === segIdx ? null : segIdx)}
                   >
                     <span
-                      className="inline-block h-3 w-3 shrink-0 rounded-full"
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full sm:h-3 sm:w-3"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className={`text-sm truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`text-sm whitespace-nowrap sm:truncate transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {item.name}
                     </span>
-                    <span className={`ml-auto shrink-0 text-sm tabular-nums transition-colors duration-150 ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`hidden shrink-0 text-sm tabular-nums transition-colors duration-150 @[10rem]:inline ${isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
                       {pct}%
                     </span>
                   </button>
@@ -673,11 +736,16 @@ function TrendChart({
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11 }}
+                interval={Math.max(0, Math.ceil(chartData.length / 6) - 1)}
+                tickFormatter={(label: string) => label.replace(/^\S+\s/, '')}
+              />
               <YAxis unit={unit} tickFormatter={metric === 'earnings' ? (v) => `${Math.round(v)}` : undefined} />
               <RechartsTooltip formatter={(value) => [formatter(Number(value)), '']} />
               <Area
-                type="monotone"
+                type="linear"
                 dataKey="value"
                 name="Current"
                 stroke="#6366f1"
@@ -687,7 +755,7 @@ function TrendChart({
               />
               {compareMode && compareData && (
                 <Area
-                  type="monotone"
+                  type="linear"
                   dataKey="compareValue"
                   name="Compare"
                   stroke="#6366f1"
@@ -699,6 +767,78 @@ function TrendChart({
               )}
               {compareMode && compareData && <Legend />}
             </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Weekday Avg Chart ──────────────────────────────────────────────────────
+
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+
+function WeekdayChart({
+  data,
+  dateRange,
+  loading,
+}: {
+  data: DashboardData
+  dateRange: DateRange
+  loading: boolean
+}) {
+  const chartData = useMemo(() => {
+    // Count how many of each weekday exist in the range (capped at today)
+    const today = new Date()
+    const rangeEnd = dateRange.to > today ? today : dateRange.to
+    if (rangeEnd < dateRange.from) return []
+
+    const allDays = eachDayOfInterval({ start: dateRange.from, end: rangeEnd })
+    const weekdayCounts = [0, 0, 0, 0, 0] // Mon–Fri
+    for (const d of allDays) {
+      const dow = getDay(d) // 0=Sun, 1=Mon, ..., 6=Sat
+      if (dow >= 1 && dow <= 5) weekdayCounts[dow - 1]++
+    }
+
+    // Sum minutes per weekday from entries
+    const weekdayMinutes = [0, 0, 0, 0, 0]
+    for (const entry of data.entries) {
+      const dow = getDay(parseISO(entry.date))
+      if (dow >= 1 && dow <= 5) weekdayMinutes[dow - 1] += entry.durationMinutes
+    }
+
+    return WEEKDAY_LABELS.map((label, i) => ({
+      day: label,
+      hours: weekdayCounts[i] > 0
+        ? Math.round((weekdayMinutes[i] / 60 / weekdayCounts[i]) * 100) / 100
+        : 0,
+    }))
+  }, [data.entries, dateRange])
+
+  if (loading) return <Skeleton className="h-[350px] w-full" />
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base font-medium">Avg Hours by Weekday</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {chartData.length === 0 ? (
+          <NoData />
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+              <YAxis unit="h" />
+              <RechartsTooltip formatter={(value) => [`${value}h`, 'Avg']} />
+              <Bar
+                dataKey="hours"
+                fill={ACCENT}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={48}
+              />
+            </BarChart>
           </ResponsiveContainer>
         )}
       </CardContent>
@@ -758,19 +898,21 @@ function TimeEntriesTable({
   if (sortedEntries.length === 0) return null
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <h2 className="font-serif text-xl font-medium">Time Entries</h2>
-        <span className="text-sm text-muted-foreground">({sortedEntries.length})</span>
-      </div>
-
-      <div className="rounded-lg border bg-card">
+    <Card>
+      <CardHeader>
+        <div className="flex items-baseline gap-2">
+          <CardTitle className="text-base font-medium">Time Entries</CardTitle>
+          <span className="text-sm text-muted-foreground">({sortedEntries.length})</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+      <div className="rounded-lg border overflow-hidden bg-background">
         {isMobile ? (
           <div className="divide-y divide-border">
             {visibleEntries.map((entry, i) => {
               const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
               return (
-                <div key={i} className="p-4 space-y-2 bg-white dark:bg-background">
+                <div key={i} className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       {entry.projectName ? (
@@ -814,7 +956,7 @@ function TimeEntriesTable({
               {visibleEntries.map((entry, i) => {
                 const color = entry.projectName ? projectColorMap.get(entry.projectName) : undefined
                 return (
-                  <TableRow key={i} className="bg-white dark:bg-background">
+                  <TableRow key={i}>
                     <TableCell className="text-sm text-muted-foreground">{formatShortDate(entry.date)}</TableCell>
                     <TableCell>
                       {entry.projectName ? (
@@ -852,7 +994,8 @@ function TimeEntriesTable({
           </Button>
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -959,14 +1102,14 @@ export default function ReportsPage() {
     }
   }
 
-  const projectItems = projects.map((p) => ({ id: p.id, name: p.name, color: p.color ?? undefined }))
+  const projectItems = projects.map((p) => ({ id: p.id, name: p.name, color: p.client?.color ?? '#6789b9' }))
   const clientItems = clients.map((c) => ({ id: c.id, name: c.name }))
 
   return (
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-serif text-3xl font-medium tracking-tight">Reports</h1>
+        <h1 className="font-serif text-3xl font-normal tracking-tight">Reports</h1>
         <Button onClick={handleExportPDF}>
           <FileText className="mr-2 h-4 w-4" />
           Export PDF
@@ -1034,15 +1177,22 @@ export default function ReportsPage() {
         <EarningsDonutChart data={data} loading={data.isLoading} />
       </div>
 
-      {/* Row 2: Trend chart (full width) */}
-      <TrendChart
-        data={data}
-        compareData={compareMode ? compareData : null}
-        dateRange={dateRange}
-        compareDateRange={compareMode ? compareDateRange : null}
-        loading={data.isLoading}
-        compareMode={compareMode}
-      />
+      {/* Row 2: Trend + Weekday */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TrendChart
+          data={data}
+          compareData={compareMode ? compareData : null}
+          dateRange={dateRange}
+          compareDateRange={compareMode ? compareDateRange : null}
+          loading={data.isLoading}
+          compareMode={compareMode}
+        />
+        <WeekdayChart
+          data={data}
+          dateRange={dateRange}
+          loading={data.isLoading}
+        />
+      </div>
 
       {/* Time Entries */}
       <TimeEntriesTable data={data} loading={data.isLoading} />

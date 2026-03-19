@@ -30,7 +30,7 @@ export function useClients() {
 
   useEffect(() => { fetchClients() }, [fetchClients])
 
-  const createClient = async (client: { name: string; hourly_rate?: number | null }) => {
+  const createClient = async (client: { name: string; color: string; hourly_rate?: number | null }) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
       const data = devCreateClient({ ...client, user_id: user.id, hourly_rate: client.hourly_rate ?? null, is_active: true })
@@ -46,7 +46,7 @@ export function useClients() {
     return { data, error }
   }
 
-  const updateClient = async (id: string, updates: Partial<Pick<Client, 'name' | 'hourly_rate' | 'is_active'>>) => {
+  const updateClient = async (id: string, updates: Partial<Pick<Client, 'name' | 'color' | 'hourly_rate' | 'is_active'>>) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
       devUpdateClient(id, updates)
@@ -62,13 +62,34 @@ export function useClients() {
     return { data: null, error }
   }
 
-  const deleteClient = async (id: string) => {
+  const deleteClient = async (id: string, cascade = false) => {
     if (!user) return { error: new Error('Not authenticated') }
     if (DEV) {
-      devDeleteClient(id)
+      devDeleteClient(id, cascade)
       await fetchClients()
       return { error: null }
     }
+
+    if (cascade) {
+      // Find projects belonging to this client
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('client_id', id)
+        .eq('user_id', user.id)
+      const projectIds = (projects ?? []).map(p => p.id)
+
+      if (projectIds.length > 0) {
+        // Delete time entries for those projects
+        await supabase.from('time_entries').delete().in('project_id', projectIds).eq('user_id', user.id)
+        // Delete the projects
+        await supabase.from('projects').delete().in('id', projectIds).eq('user_id', user.id)
+      }
+    } else {
+      // Nullify client_id on projects
+      await supabase.from('projects').update({ client_id: null }).eq('client_id', id).eq('user_id', user.id)
+    }
+
     const { error } = await supabase.from('clients').delete().eq('id', id).eq('user_id', user.id)
     if (!error) await fetchClients()
     return { error }

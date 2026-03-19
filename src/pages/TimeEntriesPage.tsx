@@ -121,7 +121,7 @@ export default function TimeEntriesPage() {
           existing.minutes += e.duration_minutes
           existing.earned += amount
         } else {
-          map.set(e.project_id, { name: e.project.name, color: e.project.color, minutes: e.duration_minutes, earned: amount })
+          map.set(e.project_id, { name: e.project.name, color: e.project.client?.color ?? '#6789b9', minutes: e.duration_minutes, earned: amount })
         }
       }
     }
@@ -217,7 +217,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Time this week</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-medium">{formatDuration(weekMinutes)}</p>
+                <p className="font-serif text-xl font-normal">{formatDuration(weekMinutes)}</p>
                 <ComparisonBadge
                   current={weekMinutes}
                   previous={lastWeekMinutes}
@@ -230,7 +230,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Earned this week</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-medium">{formatCurrency(weekEarned)}</p>
+                <p className="font-serif text-xl font-normal">{formatCurrency(weekEarned)}</p>
                 <ComparisonBadge
                   current={weekEarned}
                   previous={lastWeekEarned}
@@ -243,7 +243,7 @@ export default function TimeEntriesPage() {
             <div className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">Earned this month</p>
               <div className="flex items-baseline gap-2">
-                <p className="font-serif text-xl font-medium">{formatCurrency(monthlyEarned)}</p>
+                <p className="font-serif text-xl font-normal">{formatCurrency(monthlyEarned)}</p>
                 <ComparisonBadge
                   current={monthlyEarned}
                   previous={lastMonthEarned}
@@ -256,7 +256,7 @@ export default function TimeEntriesPage() {
         </div>
 
         {/* Rounded white cap — sits outside padded area for full width without overflow-hidden */}
-        <div className="mt-5 h-[32px] bg-background rounded-t-[16px] shadow-xs" />
+        <div className="mt-5 h-[32px] bg-background rounded-t-[16px] shadow-[0px_-2px_12px_0px_rgba(0,0,0,0.02)]" />
       </div>
 
       {/* Filters — scrollable */}

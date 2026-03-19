@@ -239,7 +239,7 @@ export default function InvoicingPage() {
   return (
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div>
-        <h1 className="font-serif text-3xl font-medium tracking-tight">Invoicing</h1>
+        <h1 className="font-serif text-3xl font-normal tracking-tight">Invoicing</h1>
         <p className="text-sm text-muted-foreground">
           Review time entries and manage payment status
         </p>
@@ -259,19 +259,19 @@ export default function InvoicingPage() {
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total entries</p>
-            <p className="font-serif text-xl font-medium">{loading ? '—' : entries.length}</p>
+            <p className="font-serif text-xl font-normal">{loading ? '—' : entries.length}</p>
           </CardContent>
         </Card>
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total hours</p>
-            <p className="font-serif text-xl font-medium">{loading ? '—' : formatDuration(totals.totalMinutes)}</p>
+            <p className="font-serif text-xl font-normal">{loading ? '—' : formatDuration(totals.totalMinutes)}</p>
           </CardContent>
         </Card>
         <Card className="py-3">
           <CardContent className="px-4 flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total amount</p>
-            <p className="font-serif text-xl font-medium">{loading ? '—' : formatCurrency(totals.totalAmount)}</p>
+            <p className="font-serif text-xl font-normal">{loading ? '—' : formatCurrency(totals.totalAmount)}</p>
           </CardContent>
         </Card>
       </div>
@@ -425,7 +425,7 @@ export default function InvoicingPage() {
                         <span className="flex items-center gap-1.5 text-sm font-medium">
                           <span
                             className="inline-block h-2 w-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: entry.project.color }}
+                            style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
                           />
                           <span className="truncate">{entry.project.name}</span>
                         </span>
@@ -506,7 +506,7 @@ export default function InvoicingPage() {
                         <span className="flex items-center gap-2">
                           <span
                             className="inline-block h-2 w-2 rounded-full"
-                            style={{ backgroundColor: entry.project.color }}
+                            style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
                           />
                           {entry.project.name}
                         </span>

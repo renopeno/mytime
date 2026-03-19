@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/form'
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
 import { ClientSelect } from '@/components/clients/ClientSelect'
-import { ColorSwatchPicker } from '@/components/ui/color-swatch-picker'
 import { useProjects } from '@/hooks/useProjects'
 import { PROJECT_TYPES, getProjectTypeLabel } from '@/types/app.types'
 import type { ProjectWithClient } from '@/types/app.types'
@@ -34,7 +33,6 @@ const projectSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   client_id: z.string().min(1, 'Client is required'),
   description: z.string(),
-  color: z.string(),
   type: z.string().min(1, 'Type is required'),
   hourly_rate: z.number().nullable(),
   estimated_hours: z.number().nullable(),
@@ -60,7 +58,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
       name: '',
       client_id: '',
       description: '',
-      color: '#6366f1',
       type: 'web_design',
       hourly_rate: null,
       estimated_hours: null,
@@ -75,7 +72,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
           name: project.name,
           client_id: project.client_id ?? '',
           description: project.description ?? '',
-          color: project.color,
           type: project.type ?? 'web_design',
           hourly_rate: project.hourly_rate,
           estimated_hours: project.estimated_hours,
@@ -86,7 +82,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
           name: '',
           client_id: '',
           description: '',
-          color: '#6366f1',
           type: 'web_design',
           hourly_rate: null,
           estimated_hours: null,
@@ -96,15 +91,12 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
     }
   }, [open, project, form])
 
-
-
   async function handleSubmit(values: ProjectFormValues) {
     if (isEditing && project) {
       const { error } = await updateProject(project.id, {
         name: values.name,
         client_id: values.client_id,
         description: values.description,
-        color: values.color,
         type: values.type,
         hourly_rate: values.hourly_rate,
         estimated_hours: values.estimated_hours,
@@ -120,7 +112,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         name: values.name,
         client_id: values.client_id,
         description: values.description,
-        color: values.color,
         type: values.type,
         hourly_rate: values.hourly_rate,
         estimated_hours: values.estimated_hours,
@@ -197,22 +188,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                             ))}
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Color</FormLabel>
-                      <FormControl>
-                        <ColorSwatchPicker
-                          value={field.value}
-                          onChange={field.onChange}
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

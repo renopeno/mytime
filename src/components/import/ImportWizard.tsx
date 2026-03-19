@@ -1128,7 +1128,7 @@ function ImportStepContent({
             <CardTitle className="text-sm font-medium text-muted-foreground">Time Entries</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-serif text-2xl font-medium">{totalEntries}</p>
+            <p className="font-serif text-2xl font-normal">{totalEntries}</p>
           </CardContent>
         </Card>
         <Card>
@@ -1136,7 +1136,7 @@ function ImportStepContent({
             <CardTitle className="text-sm font-medium text-muted-foreground">New Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-serif text-2xl font-medium">{newClientCount}</p>
+            <p className="font-serif text-2xl font-normal">{newClientCount}</p>
           </CardContent>
         </Card>
         <Card>
@@ -1144,7 +1144,7 @@ function ImportStepContent({
             <CardTitle className="text-sm font-medium text-muted-foreground">New Projects</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="font-serif text-2xl font-medium">{newProjectCount}</p>
+            <p className="font-serif text-2xl font-normal">{newProjectCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -1295,7 +1295,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       {/* Header */}
       <div className="shrink-0 pr-6">
-        <h2 className="font-serif text-xl font-medium">Import CSV</h2>
+        <h2 className="font-serif text-xl font-normal">Import CSV</h2>
       </div>
       {/* Step indicator — centered, with breathing room */}
       <div className="flex shrink-0 justify-center pb-1">

@@ -114,7 +114,7 @@ export function ProjectCombobox({ value, onValueChange, placeholder = 'Project',
             >
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: project.color }}
+                style={{ backgroundColor: project.client?.color ?? '#6789b9' }}
               />
               <span className="flex-1 truncate text-left">
                 {project.name}

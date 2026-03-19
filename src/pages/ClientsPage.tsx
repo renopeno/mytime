@@ -18,12 +18,12 @@ export default function ClientsPage() {
     setFormOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    const { error } = await deleteClient(id)
+  const handleDelete = async (id: string, cascade = false) => {
+    const { error } = await deleteClient(id, cascade)
     if (error) {
       toast.error('Failed to delete client')
     } else {
-      toast.success('Client deleted')
+      toast.success(cascade ? 'Client and all related data deleted' : 'Client deleted')
     }
   }
 
@@ -36,13 +36,15 @@ export default function ClientsPage() {
     }
   }
 
-  const handleBulkDelete = async (ids: string[]) => {
-    const results = await Promise.all(ids.map((id) => deleteClient(id)))
+  const handleBulkDelete = async (ids: string[], cascade = false) => {
+    const results = await Promise.all(ids.map((id) => deleteClient(id, cascade)))
     const failed = results.filter((r) => r.error).length
     if (failed > 0) {
       toast.error(`Failed to delete ${failed} client${failed !== 1 ? 's' : ''}`)
     } else {
-      toast.success(`Deleted ${ids.length} client${ids.length !== 1 ? 's' : ''}`)
+      toast.success(cascade
+        ? `Deleted ${ids.length} client${ids.length !== 1 ? 's' : ''} and all related data`
+        : `Deleted ${ids.length} client${ids.length !== 1 ? 's' : ''}`)
     }
   }
 
@@ -79,7 +81,7 @@ export default function ClientsPage() {
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-medium tracking-tight">Clients</h1>
+          <h1 className="font-serif text-3xl font-normal tracking-tight">Clients</h1>
           <p className="text-sm text-muted-foreground">
             Manage your clients and their billing details
           </p>

@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { NavLink, Link } from 'react-router'
 import {
   Clock,
@@ -73,10 +74,10 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
       <SidebarHeader className="py-5 group-data-[collapsible=icon]:!py-2">
         <div className="flex items-center justify-between gap-2 pl-2 group-data-[collapsible=icon]:pl-0">
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-            <span className="font-serif text-2xl font-medium tracking-tight leading-none">MyTime</span>
-            <span className="shrink-0 rounded-full bg-secondary px-1.5 py-px text-[8px] font-semibold text-secondary-foreground uppercase tracking-wider">
+            <span className="font-serif text-2xl font-normal tracking-tight leading-none">MyTime</span>
+            <Badge variant="secondary" className="text-[10px] tracking-wider">
               Free
-            </span>
+            </Badge>
           </div>
           <SidebarTrigger className="shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8" />
         </div>

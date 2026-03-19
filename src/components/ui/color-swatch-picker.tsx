@@ -2,18 +2,17 @@ import { CheckIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const SWATCH_COLORS = [
-  { hex: '#64748b', label: 'Slate' },
-  { hex: '#ef4444', label: 'Red' },
+  { hex: '#ed3838', label: 'Red' },
   { hex: '#f97316', label: 'Orange' },
-  { hex: '#f59e0b', label: 'Amber' },
-  { hex: '#10b981', label: 'Emerald' },
-  { hex: '#14b8a6', label: 'Teal' },
+  { hex: '#f6b03a', label: 'Amber' },
+  { hex: '#96c46e', label: 'Emerald' },
+  { hex: '#14b8b8', label: 'Teal' },
   { hex: '#0ea5e9', label: 'Sky' },
-  { hex: '#3b82f6', label: 'Blue' },
-  { hex: '#6366f1', label: 'Indigo' },
-  { hex: '#8b5cf6', label: 'Violet' },
-  { hex: '#ec4899', label: 'Pink' },
-  { hex: '#f43f5e', label: 'Rose' },
+  { hex: '#5b8bfc', label: 'Blue' },
+  { hex: '#7663f7', label: 'Indigo' },
+  { hex: '#b35cf6', label: 'Violet' },
+  { hex: '#f155ab', label: 'Pink' },
+  { hex: '#6789b9', label: 'Slate' },
   { hex: '#000000', label: 'Black' },
 ] as const
 
