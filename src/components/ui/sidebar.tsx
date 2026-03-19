@@ -134,6 +134,7 @@ function SidebarProvider({
           {
             "--sidebar-width": SIDEBAR_WIDTH,
             "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+            "--sidebar-current-width": open ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON,
             ...style,
           } as React.CSSProperties
         }

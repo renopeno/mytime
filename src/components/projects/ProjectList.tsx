@@ -84,11 +84,11 @@ export function ProjectList({
 
   return (
     <>
-      <BulkActionBar count={selected.size} open={selected.size > 0}>
+      <BulkActionBar count={selected.size} open={selected.size > 0} onClose={() => setSelected(new Set())}>
         <Button
           variant="outline"
           size="sm"
-          className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          className="border-transparent bg-white/10 text-white hover:bg-white/15"
           onClick={() => {
             onBulkToggleComplete(selectedProjects)
             setSelected(new Set())
@@ -101,7 +101,7 @@ export function ProjectList({
           )}
         </Button>
         <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
-          <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white" />}>
+          <AlertDialogTrigger render={<Button variant="outline" size="sm" className="border-transparent bg-white/10 text-white hover:bg-white/15" />}>
               <Trash2 className="mr-1.5 h-3.5 w-3.5" />
               Delete
           </AlertDialogTrigger>

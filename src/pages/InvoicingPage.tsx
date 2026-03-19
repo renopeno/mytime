@@ -356,12 +356,12 @@ export default function InvoicingPage() {
         )}
       </div>
 
-      <BulkActionBar count={selectedIds.size} open={someSelected}>
+      <BulkActionBar count={selectedIds.size} open={someSelected} onClose={() => setSelectedIds(new Set())}>
         {paidFilter !== 'paid' && (
           <>
             <Button
               size="sm"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              className="border-transparent bg-white/10 text-white hover:bg-white/15"
               variant="outline"
               onClick={handleMarkInvoiced}
             >
@@ -370,7 +370,7 @@ export default function InvoicingPage() {
             </Button>
             <Button
               size="sm"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              className="border-transparent bg-white/10 text-white hover:bg-white/15"
               variant="outline"
               onClick={handleMarkPaid}
             >
