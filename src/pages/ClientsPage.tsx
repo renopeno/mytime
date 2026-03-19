@@ -60,6 +60,13 @@ export default function ClientsPage() {
     }
   }
 
+  const handleUpdateRate = async (id: string, rate: number | null) => {
+    const { error } = await updateClient(id, { hourly_rate: rate })
+    if (error) {
+      toast.error('Failed to update rate')
+    }
+  }
+
   const handleFormSuccess = () => {
     setSelectedClient(null)
     refetch()
@@ -121,6 +128,7 @@ export default function ClientsPage() {
             onToggleActive={handleToggleActive}
             onBulkDelete={handleBulkDelete}
             onBulkToggleActive={handleBulkToggleActive}
+            onUpdateRate={handleUpdateRate}
           />
         </TabsContent>
 
@@ -133,6 +141,7 @@ export default function ClientsPage() {
             onToggleActive={handleToggleActive}
             onBulkDelete={handleBulkDelete}
             onBulkToggleActive={handleBulkToggleActive}
+            onUpdateRate={handleUpdateRate}
           />
         </TabsContent>
       </Tabs>
