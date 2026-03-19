@@ -279,32 +279,32 @@ function InlineRate({ value, onChange }: { value: number | null; onChange: (v: n
     }
   }
 
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        type="number"
-        step="0.01"
-        min="0"
-        className="h-7 w-24 rounded-md border border-neutral-30 bg-neutral-10 px-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-          if (e.key === 'Escape') setEditing(false)
-        }}
-        autoFocus
-      />
-    )
-  }
-
   return (
-    <button
-      className="h-7 rounded-md px-2 text-sm text-left hover:bg-neutral-20 transition-colors -ml-2"
-      onClick={startEdit}
-    >
-      {value != null ? formatCurrency(value) : <span className="text-muted-foreground">—</span>}
-    </button>
+    <div className="w-24 -ml-2">
+      {editing ? (
+        <input
+          ref={inputRef}
+          type="number"
+          step="0.01"
+          min="0"
+          className="h-7 w-full rounded-md border border-neutral-30 bg-neutral-10 px-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit()
+            if (e.key === 'Escape') setEditing(false)
+          }}
+          autoFocus
+        />
+      ) : (
+        <button
+          className="h-7 w-full rounded-md px-2 text-sm text-left hover:bg-neutral-20 transition-colors"
+          onClick={startEdit}
+        >
+          {value != null ? formatCurrency(value) : <span className="text-muted-foreground">—</span>}
+        </button>
+      )}
+    </div>
   )
 }
