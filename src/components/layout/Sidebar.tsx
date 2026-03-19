@@ -120,7 +120,7 @@ export function AppSidebar({ companyName }: { companyName?: string | null }) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col min-w-0 text-left overflow-hidden transition-[opacity,width] duration-150 ease-out group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
+            <div className="flex flex-col min-w-0 text-left group-data-[collapsible=icon]:hidden">
               <span className="truncate text-sm font-medium">{fullName}</span>
               <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
             </div>
