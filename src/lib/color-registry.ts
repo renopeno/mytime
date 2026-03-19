@@ -1,7 +1,8 @@
 export type ColorStatus = 'tokenized' | 'unresolved'
 
 export type ColorCategory =
-  | 'primitive'      // layer 1: abstract color scale
+  | 'primitive-neutral'
+  | 'primitive-green'
   | 'core'           // layer 2: semantic tokens referencing primitives
   | 'status'
   | 'chart'
@@ -22,14 +23,14 @@ export type ColorEntry = {
 }
 
 export const colorRegistry: ColorEntry[] = [
-  // ─── Primitive: Neutral Scale ──────────────────────────────────────────
+  // ─── Neutral Scale ─────────────────────────────────────────────────────
   {
     id: 'neutral-10',
     value: '#f9f4ef',
     token: '--neutral-10',
     tailwindClass: 'neutral-10',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 10',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -40,7 +41,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-20',
     tailwindClass: 'neutral-20',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 20',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -51,7 +52,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-30',
     tailwindClass: 'neutral-30',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 30',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -62,7 +63,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-40',
     tailwindClass: 'neutral-40',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 40',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -73,7 +74,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-60',
     tailwindClass: 'neutral-60',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 60',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -84,7 +85,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-80',
     tailwindClass: 'neutral-80',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 80',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -95,20 +96,20 @@ export const colorRegistry: ColorEntry[] = [
     token: '--neutral-100',
     tailwindClass: 'neutral-100',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-neutral',
     label: 'Neutral 100',
     usedIn: ['index.css'],
     status: 'tokenized',
   },
 
-  // ─── Primitive: Green Scale ─────────────────────────────────────────────
+  // ─── Green Scale ───────────────────────────────────────────────────────
   {
     id: 'green-20',
     value: 'oklch(0.72 0.12 163)',
     token: '--green-20',
     tailwindClass: 'green-20',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-green',
     label: 'Green 20',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -119,7 +120,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--green-40',
     tailwindClass: 'green-40',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-green',
     label: 'Green 40',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -130,7 +131,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--green-60',
     tailwindClass: 'green-60',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-green',
     label: 'Green 60',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -141,7 +142,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--green-80',
     tailwindClass: 'green-80',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-green',
     label: 'Green 80',
     usedIn: ['index.css'],
     status: 'tokenized',
@@ -152,7 +153,7 @@ export const colorRegistry: ColorEntry[] = [
     token: '--green-100',
     tailwindClass: 'green-100',
     primitive: null,
-    category: 'primitive',
+    category: 'primitive-green',
     label: 'Green 100',
     usedIn: ['index.css'],
     status: 'tokenized',

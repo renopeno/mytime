@@ -12,7 +12,8 @@ import { SimilarColorsPopover } from '@/components/dev/SimilarColorsPopover'
 type Filter = 'all' | 'tokenized' | 'unresolved'
 
 const CATEGORY_ORDER: ColorCategory[] = [
-  'primitive',
+  'primitive-neutral',
+  'primitive-green',
   'core',
   'status',
   'chart',
@@ -22,7 +23,8 @@ const CATEGORY_ORDER: ColorCategory[] = [
 ]
 
 const CATEGORY_LABELS: Record<ColorCategory, string> = {
-  primitive: 'Primitive Scale',
+  'primitive-neutral': 'Neutral Scale',
+  'primitive-green': 'Green Scale',
   core: 'Core (Semantic)',
   status: 'Status',
   chart: 'Chart',
