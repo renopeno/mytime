@@ -14,10 +14,12 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
   const hexDisplay = toHex(entry.value)
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group w-full overflow-hidden rounded-lg border border-border text-left transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      className="group w-full cursor-pointer overflow-hidden rounded-lg border border-border text-left transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
     >
       {/* Color block */}
       <div
@@ -47,7 +49,7 @@ export function ColorSwatchCard({ entry, onClick }: ColorSwatchCardProps) {
           </span>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 
