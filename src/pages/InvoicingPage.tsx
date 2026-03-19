@@ -16,6 +16,7 @@ import { formatDuration } from '@/lib/duration'
 import { formatDate, formatCurrency } from '@/lib/format'
 import { ProjectSelect } from '@/components/projects/ProjectSelect'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -423,10 +424,12 @@ export default function InvoicingPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(entry.date)}</p>
                       {entry.project ? (
                         <span className="flex items-center gap-1.5 text-sm font-medium">
-                          <span
-                            className="inline-block h-2 w-2 shrink-0 rounded-full"
-                            style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
-                          />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-block h-2 w-2 shrink-0 rounded-full cursor-help" style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }} />} />
+                              <TooltipContent>{entry.project.client?.name ?? 'No client'}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <span className="truncate">{entry.project.name}</span>
                         </span>
                       ) : (
@@ -504,10 +507,12 @@ export default function InvoicingPage() {
                     <TableCell>
                       {entry.project ? (
                         <span className="flex items-center gap-2">
-                          <span
-                            className="inline-block h-2 w-2 rounded-full"
-                            style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }}
-                          />
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger render={<span className="inline-block h-2 w-2 shrink-0 rounded-full cursor-help" style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }} />} />
+                              <TooltipContent>{entry.project.client?.name ?? 'No client'}</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {entry.project.name}
                         </span>
                       ) : (
