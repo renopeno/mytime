@@ -22,7 +22,7 @@ export function BulkActionBar({ count, open, onClose, children }: BulkActionBarP
         open ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
       )}
     >
-      <div className="flex items-center gap-3 rounded-2xl bg-neutral-100 px-5 py-3.5 text-white shadow-lg">
+      <div className="flex items-center gap-3 rounded-2xl bg-green-100 px-5 py-3.5 text-white shadow-lg">
         <span className="text-sm font-medium">{count} selected</span>
         <div className="ml-auto flex items-center gap-2">
           {children}
