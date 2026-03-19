@@ -278,7 +278,7 @@ export function ProjectList({
                           )
                         })}
                       </svg>
-                      <span className={`text-xs ${over ? 'font-medium' : 'text-muted-foreground'}`} style={over ? { color: '#C75042' } : undefined}>
+                      <span className={`text-sm ${over ? 'font-medium' : 'text-muted-foreground'}`} style={over ? { color: '#C75042' } : undefined}>
                         {logged % 1 === 0 ? logged : logged.toFixed(1)}h / {estimate}h
                       </span>
                     </div>
