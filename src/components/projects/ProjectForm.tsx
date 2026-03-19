@@ -23,17 +23,14 @@ import {
   FormDescription,
   FormMessage,
 } from '@/components/ui/form'
-import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
 import { ClientSelect } from '@/components/clients/ClientSelect'
 import { useProjects } from '@/hooks/useProjects'
-import { PROJECT_TYPES, getProjectTypeLabel } from '@/types/app.types'
 import type { ProjectWithClient } from '@/types/app.types'
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   client_id: z.string().min(1, 'Client is required'),
   description: z.string(),
-  type: z.string().min(1, 'Type is required'),
   hourly_rate: z.number().nullable(),
   estimated_hours: z.number().nullable(),
   is_archived: z.boolean(),
@@ -58,7 +55,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
       name: '',
       client_id: '',
       description: '',
-      type: 'web_design',
       hourly_rate: null,
       estimated_hours: null,
       is_archived: false,
@@ -72,7 +68,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
           name: project.name,
           client_id: project.client_id ?? '',
           description: project.description ?? '',
-          type: project.type ?? 'web_design',
           hourly_rate: project.hourly_rate,
           estimated_hours: project.estimated_hours,
           is_archived: project.is_archived,
@@ -82,7 +77,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
           name: '',
           client_id: '',
           description: '',
-          type: 'web_design',
           hourly_rate: null,
           estimated_hours: null,
           is_archived: false,
@@ -97,7 +91,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         name: values.name,
         client_id: values.client_id,
         description: values.description,
-        type: values.type,
+
         hourly_rate: values.hourly_rate,
         estimated_hours: values.estimated_hours,
         is_archived: values.is_archived,
@@ -112,7 +106,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
         name: values.name,
         client_id: values.client_id,
         description: values.description,
-        type: values.type,
+
         hourly_rate: values.hourly_rate,
         estimated_hours: values.estimated_hours,
       })
@@ -164,30 +158,6 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
                           value={field.value}
                           onValueChange={field.onChange}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type</FormLabel>
-                      <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <span className="flex flex-1 text-left text-sm">{getProjectTypeLabel(field.value)}</span>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PROJECT_TYPES.map((pt) => (
-                              <SelectItem key={pt.value} value={pt.value}>
-                                {pt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

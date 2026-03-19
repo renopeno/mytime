@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v10'
+const DEV_DB_VERSION = 'v11'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -60,14 +60,14 @@ function buildSeed() {
   ]
 
   const projects: Project[] = [
-    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,    name: 'Website Redesign',    description: 'Kompletni redizajn web stranice',       type: 'web_design',     is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
-    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,    name: 'E-commerce',          description: 'Shopify integracija i custom cart',      type: 'webshop',        is_archived: false, hourly_rate: 90,   estimated_hours: 5,    created_at: now(), updated_at: now() },
-    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,    name: 'MVP razvoj',          description: 'React + Node.js MVP',                    type: 'product_design', is_archived: false, hourly_rate: 65,   estimated_hours: 20,   created_at: now(), updated_at: now() },
-    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio,  name: 'Brand identitet',     description: 'Logo, boje, tipografija',                type: 'deck_design',   is_archived: false, hourly_rate: null, estimated_hours: 4,    created_at: now(), updated_at: now() },
-    { id: pInternal, user_id: DEV_USER_ID, client_id: null,     name: 'Interni zadaci',      description: null,                                     type: 'web_design',     is_archived: false, hourly_rate: null, estimated_hours: null, created_at: now(), updated_at: now() },
-    { id: pMobile,   user_id: DEV_USER_ID, client_id: cStartup, name: 'Mobile App',          description: 'React Native mobile application',        type: 'product_design', is_archived: false, hourly_rate: 60,   estimated_hours: 40,   created_at: now(), updated_at: now() },
-    { id: pBrandId,  user_id: DEV_USER_ID, client_id: cDesign,  name: 'Brand Identity',      description: 'Full brand identity package',             type: 'product_design', is_archived: false, hourly_rate: 75,   estimated_hours: 15,   created_at: now(), updated_at: now() },
-    { id: pEcomPlat, user_id: DEV_USER_ID, client_id: cTech,    name: 'E-commerce Platform', description: 'Custom e-commerce platform build',        type: 'webshop',        is_archived: false, hourly_rate: 50,   estimated_hours: 30,   created_at: now(), updated_at: now() },
+    { id: pWeb,      user_id: DEV_USER_ID, client_id: cAcme,    name: 'Website Redesign',    description: 'Kompletni redizajn web stranice',       is_archived: false, hourly_rate: 80,   estimated_hours: 12,   created_at: now(), updated_at: now() },
+    { id: pEcom,     user_id: DEV_USER_ID, client_id: cAcme,    name: 'E-commerce',          description: 'Shopify integracija i custom cart',      is_archived: false, hourly_rate: 90,   estimated_hours: 5,    created_at: now(), updated_at: now() },
+    { id: pMvp,      user_id: DEV_USER_ID, client_id: cTech,    name: 'MVP razvoj',          description: 'React + Node.js MVP',                    is_archived: false, hourly_rate: 65,   estimated_hours: 20,   created_at: now(), updated_at: now() },
+    { id: pBrand,    user_id: DEV_USER_ID, client_id: cStudio,  name: 'Brand identitet',     description: 'Logo, boje, tipografija',                is_archived: false, hourly_rate: null, estimated_hours: 4,    created_at: now(), updated_at: now() },
+    { id: pInternal, user_id: DEV_USER_ID, client_id: null,     name: 'Interni zadaci',      description: null,                                     is_archived: false, hourly_rate: null, estimated_hours: null, created_at: now(), updated_at: now() },
+    { id: pMobile,   user_id: DEV_USER_ID, client_id: cStartup, name: 'Mobile App',          description: 'React Native mobile application',        is_archived: false, hourly_rate: 60,   estimated_hours: 40,   created_at: now(), updated_at: now() },
+    { id: pBrandId,  user_id: DEV_USER_ID, client_id: cDesign,  name: 'Brand Identity',      description: 'Full brand identity package',             is_archived: false, hourly_rate: 75,   estimated_hours: 15,   created_at: now(), updated_at: now() },
+    { id: pEcomPlat, user_id: DEV_USER_ID, client_id: cTech,    name: 'E-commerce Platform', description: 'Custom e-commerce platform build',        is_archived: false, hourly_rate: 50,   estimated_hours: 30,   created_at: now(), updated_at: now() },
   ]
 
   const timeEntries: TimeEntry[] = [

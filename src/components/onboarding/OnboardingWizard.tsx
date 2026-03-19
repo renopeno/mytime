@@ -29,7 +29,7 @@ import {
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select'
 import { ClientSelect } from '@/components/clients/ClientSelect'
 import { ColorSwatchPicker } from '@/components/ui/color-swatch-picker'
-import { PROJECT_TYPES, getProjectTypeLabel } from '@/types/app.types'
+// project type removed
 
 // ─── Step 1: Workspace name ──────────────────────────────────────────────────
 
@@ -282,7 +282,6 @@ const projectSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   client_id: z.string().nullable(),
   color: z.string(),
-  type: z.string().min(1, 'Type is required'),
   hourly_rate: z.number().nullable(),
 })
 
@@ -300,12 +299,11 @@ function StepAddProject({ onComplete, preselectedClientId }: StepAddProjectProps
       name: '',
       client_id: preselectedClientId,
       color: '#6366f1',
-      type: 'web_design',
       hourly_rate: null as number | null,
     },
   })
 
-  const onSubmit = async (values: { name: string; client_id: string | null; color: string; type: string; hourly_rate: number | null }) => {
+  const onSubmit = async (values: { name: string; client_id: string | null; color: string; hourly_rate: number | null }) => {
     const { error } = await createProject(values)
     if (error) {
       toast.error('Failed to create project')
@@ -341,30 +339,6 @@ function StepAddProject({ onComplete, preselectedClientId }: StepAddProjectProps
                   value={field.value ?? ''}
                   onValueChange={(val) => field.onChange(val || null)}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <span className="flex flex-1 text-left text-sm">{getProjectTypeLabel(field.value)}</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECT_TYPES.map((pt) => (
-                      <SelectItem key={pt.value} value={pt.value}>
-                        {pt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

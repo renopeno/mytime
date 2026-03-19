@@ -1,7 +1,7 @@
 import { Fragment, useState, useEffect, useMemo } from 'react'
 import { Pencil, Trash2, CheckCircle2, RotateCcw, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
@@ -27,7 +27,7 @@ import { BulkActionBar } from '@/components/ui/bulk-action-bar'
 import { useShiftSelect } from '@/hooks/useShiftSelect'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatCurrency } from '@/lib/format'
-import { getProjectTypeLabel } from '@/types/app.types'
+// project type removed
 import type { ProjectWithClient } from '@/types/app.types'
 
 const NO_CLIENT_KEY = '__no_client__'
@@ -210,6 +210,12 @@ export function ProjectList({
                     !isCollapsed ? 'rotate-90' : ''
                   }`}
                 />
+                {group.projects[0]?.client && (
+                  <div
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: group.projects[0].client.color ?? '#6789b9' }}
+                  />
+                )}
                 <span className="text-sm font-medium">{group.label}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   {group.projects.length}
@@ -232,13 +238,7 @@ export function ProjectList({
                               onClick={getClickHandler(project.id)}
                               aria-label={`Select ${project.name}`}
                             />
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div
-                                className="h-2 w-2 shrink-0 rounded-full"
-                                style={{ backgroundColor: project.client?.color ?? '#6789b9' }}
-                              />
-                              <span className="text-sm font-medium truncate">{project.name}</span>
-                            </div>
+                            <span className="text-sm truncate">{project.name}</span>
                           </div>
                           <span className="shrink-0 text-sm font-semibold">
                             {estimate
@@ -248,14 +248,9 @@ export function ProjectList({
                         </div>
 
                         {/* Secondary info */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="font-normal">
-                            {getProjectTypeLabel(project.type)}
-                          </Badge>
-                          {project.hourly_rate ? (
-                            <span className="text-xs text-muted-foreground">{formatCurrency(project.hourly_rate)}/hr</span>
-                          ) : null}
-                        </div>
+                        {project.hourly_rate ? (
+                          <span className="text-xs text-muted-foreground">{formatCurrency(project.hourly_rate)}/hr</span>
+                        ) : null}
 
                         {/* Actions */}
                         <div className="flex items-center gap-1 border-t pt-3">
@@ -312,7 +307,6 @@ export function ProjectList({
               />
             </TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Rate</TableHead>
             <TableHead className="w-[180px]">Progress</TableHead>
             <TableHead className="w-28">Actions</TableHead>
@@ -342,13 +336,19 @@ export function ProjectList({
                       />
                     </div>
                   </TableCell>
-                  <TableCell colSpan={5}>
+                  <TableCell colSpan={4}>
                     <div className="flex items-center gap-2">
                       <ChevronRight
                         className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
                           !isCollapsed ? 'rotate-90' : ''
                         }`}
                       />
+                      {group.projects[0]?.client && (
+                        <div
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: group.projects[0].client.color ?? '#6789b9' }}
+                        />
+                      )}
                       <span className="font-medium">{group.label}</span>
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                         {group.projects.length}
@@ -367,19 +367,8 @@ export function ProjectList({
                         aria-label={`Select ${project.name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2 pl-6">
-                        <div
-                          className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: project.client?.color ?? '#6789b9' }}
-                        />
-                        {project.name}
-                      </div>
-                    </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        {getProjectTypeLabel(project.type)}
-                      </Badge>
+                      <span className="pl-6">{project.name}</span>
                     </TableCell>
                     <TableCell>
                       {project.hourly_rate ? (

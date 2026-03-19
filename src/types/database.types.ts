@@ -133,7 +133,6 @@ export interface Database {
           client_id: string | null
           name: string
           description: string | null
-          type: string
           is_archived: boolean
           hourly_rate: number | null
           estimated_hours: number | null
@@ -146,7 +145,6 @@ export interface Database {
           client_id?: string | null
           name: string
           description?: string | null
-          type?: string
           is_archived?: boolean
           hourly_rate?: number | null
           estimated_hours?: number | null
@@ -159,7 +157,6 @@ export interface Database {
           client_id?: string | null
           name?: string
           description?: string | null
-          type?: string
           is_archived?: boolean
           hourly_rate?: number | null
           estimated_hours?: number | null
