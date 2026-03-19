@@ -81,7 +81,7 @@ export const colorRegistry: ColorEntry[] = [
   },
   {
     id: 'neutral-80',
-    value: '#282017',
+    value: '#4a4237',
     token: '--neutral-80',
     tailwindClass: 'neutral-80',
     primitive: null,
@@ -167,7 +167,7 @@ export const colorRegistry: ColorEntry[] = [
   { id: 'popover', value: '#f9f4ef', token: '--popover', tailwindClass: 'popover', primitive: 'neutral-10', category: 'core', label: 'Popover', usedIn: ['Popover', 'DropdownMenu'], status: 'tokenized' },
   { id: 'popover-foreground', value: '#13110f', token: '--popover-foreground', tailwindClass: 'popover-foreground', primitive: 'neutral-100', category: 'core', label: 'Popover Foreground', usedIn: ['Popover', 'DropdownMenu'], status: 'tokenized' },
   { id: 'primary-foreground', value: '#f9f4ef', token: '--primary-foreground', tailwindClass: 'primary-foreground', primitive: 'neutral-10', category: 'core', label: 'Primary Foreground', usedIn: ['buttons'], status: 'tokenized' },
-  { id: 'secondary-foreground', value: '#282017', token: '--secondary-foreground', tailwindClass: 'secondary-foreground', primitive: 'neutral-80', category: 'core', label: 'Secondary Foreground', usedIn: ['secondary buttons'], status: 'tokenized' },
+  { id: 'secondary-foreground', value: '#4a4237', token: '--secondary-foreground', tailwindClass: 'secondary-foreground', primitive: 'neutral-80', category: 'core', label: 'Secondary Foreground', usedIn: ['secondary buttons'], status: 'tokenized' },
   { id: 'accent-foreground', value: '#f9f4ef', token: '--accent-foreground', tailwindClass: 'accent-foreground', primitive: 'neutral-10', category: 'core', label: 'Accent Foreground', usedIn: ['accent buttons'], status: 'tokenized' },
   { id: 'muted', value: '#e9e2db', token: '--muted', tailwindClass: 'muted', primitive: 'neutral-30', category: 'core', label: 'Muted', usedIn: ['muted backgrounds'], status: 'tokenized' },
   { id: 'muted-foreground', value: '#797065', token: '--muted-foreground', tailwindClass: 'muted-foreground', primitive: 'neutral-60', category: 'core', label: 'Muted Foreground', usedIn: ['placeholder text', 'hints'], status: 'tokenized' },
