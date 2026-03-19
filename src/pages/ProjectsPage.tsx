@@ -124,7 +124,7 @@ export default function ProjectsPage() {
             loggedMinutes={loggedMinutes}
             emptyMessage="No active projects."
             onEdit={handleEdit}
-            onDelete={handleDelete}
+
             onToggleComplete={handleToggleComplete}
             onBulkDelete={handleBulkDelete}
             onBulkToggleComplete={handleBulkToggleComplete}
@@ -138,7 +138,7 @@ export default function ProjectsPage() {
             loggedMinutes={loggedMinutes}
             emptyMessage="No completed projects."
             onEdit={handleEdit}
-            onDelete={handleDelete}
+
             onToggleComplete={handleToggleComplete}
             onBulkDelete={handleBulkDelete}
             onBulkToggleComplete={handleBulkToggleComplete}
@@ -152,6 +152,7 @@ export default function ProjectsPage() {
         onOpenChange={setFormOpen}
         project={editingProject}
         onSuccess={handleFormSuccess}
+        onDelete={handleDelete}
         defaultRate={defaultRate}
       />
     </div>

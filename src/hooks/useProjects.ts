@@ -30,10 +30,10 @@ export function useProjects() {
 
   useEffect(() => { fetchProjects() }, [fetchProjects])
 
-  const createProject = async (project: { name: string; client_id?: string | null; description?: string; hourly_rate?: number | null; estimated_hours?: number | null; is_archived?: boolean }) => {
+  const createProject = async (project: { name: string; client_id?: string | null; description?: string; hourly_rate?: number | null; estimated_hours?: number | null; estimated_amount?: number | null; estimation_type?: string | null; is_archived?: boolean }) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
-      const data = devCreateProject({ ...project, user_id: user.id, client_id: project.client_id ?? null, description: project.description ?? null, hourly_rate: project.hourly_rate ?? null, estimated_hours: project.estimated_hours ?? null, is_archived: false })
+      const data = devCreateProject({ ...project, user_id: user.id, client_id: project.client_id ?? null, description: project.description ?? null, hourly_rate: project.hourly_rate ?? null, estimated_hours: project.estimated_hours ?? null, estimated_amount: project.estimated_amount ?? null, estimation_type: project.estimation_type ?? null, is_archived: false })
       await fetchProjects()
       return { data, error: null }
     }
@@ -46,7 +46,7 @@ export function useProjects() {
     return { data, error }
   }
 
-  const updateProject = async (id: string, updates: { name?: string; client_id?: string | null; description?: string; hourly_rate?: number | null; estimated_hours?: number | null; is_archived?: boolean }) => {
+  const updateProject = async (id: string, updates: { name?: string; client_id?: string | null; description?: string; hourly_rate?: number | null; estimated_hours?: number | null; estimated_amount?: number | null; estimation_type?: string | null; is_archived?: boolean }) => {
     if (!user) return { data: null, error: new Error('Not authenticated') }
     if (DEV) {
       devUpdateProject(id, updates)

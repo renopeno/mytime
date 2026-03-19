@@ -136,6 +136,8 @@ export interface Database {
           is_archived: boolean
           hourly_rate: number | null
           estimated_hours: number | null
+          estimated_amount: number | null
+          estimation_type: string | null
           created_at: string
           updated_at: string
         }
@@ -148,6 +150,8 @@ export interface Database {
           is_archived?: boolean
           hourly_rate?: number | null
           estimated_hours?: number | null
+          estimated_amount?: number | null
+          estimation_type?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -160,6 +164,8 @@ export interface Database {
           is_archived?: boolean
           hourly_rate?: number | null
           estimated_hours?: number | null
+          estimated_amount?: number | null
+          estimation_type?: string | null
           created_at?: string
           updated_at?: string
         }

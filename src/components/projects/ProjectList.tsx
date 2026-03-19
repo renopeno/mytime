@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
+import { Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react' // Trash2 used in bulk bar
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -33,7 +33,6 @@ interface ProjectListProps {
   loggedMinutes?: Map<string, number>
   emptyMessage?: string
   onEdit: (project: ProjectWithClient) => void
-  onDelete: (id: string) => void
   onToggleComplete: (project: ProjectWithClient) => void
   onBulkDelete: (ids: string[]) => void
   onBulkToggleComplete: (projects: ProjectWithClient[]) => void
@@ -45,14 +44,12 @@ export function ProjectList({
   loggedMinutes,
   emptyMessage,
   onEdit,
-  onDelete,
   onToggleComplete,
   onBulkDelete,
   onBulkToggleComplete,
   defaultRate,
 }: ProjectListProps) {
   const isMobile = useIsMobile()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
@@ -181,24 +178,6 @@ export function ProjectList({
                   <Pencil className="mr-1 h-3.5 w-3.5" />
                   Edit
                 </Button>
-                <AlertDialog open={deleteId === project.id} onOpenChange={(open) => setDeleteId(open ? project.id : null)}>
-                  <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-destructive" />}>
-                    <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    Delete
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete project?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete &quot;{project.name}&quot;. Time entries linked to this project will not be deleted but will no longer have a project assigned.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDelete(project.id)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             </div>
           )
@@ -253,10 +232,27 @@ export function ProjectList({
               </TableCell>
               <TableCell>
                 {(() => {
-                  const estimate = project.estimated_hours
-                  if (!estimate) return <span className="text-muted-foreground">—</span>
-                  const logged = (loggedMinutes?.get(project.id) ?? 0) / 60
-                  const pct = (logged / estimate) * 100
+                  const loggedHours = (loggedMinutes?.get(project.id) ?? 0) / 60
+                  const rate = project.hourly_rate ?? project.client?.hourly_rate ?? defaultRate
+                  const earned = loggedHours * rate
+
+                  let current: number
+                  let target: number
+                  let label: string
+
+                  if (project.estimation_type === 'amount' && project.estimated_amount) {
+                    current = earned
+                    target = project.estimated_amount
+                    label = `${formatCurrency(earned)} / ${formatCurrency(target)}`
+                  } else if (project.estimated_hours) {
+                    current = loggedHours
+                    target = project.estimated_hours
+                    label = `${current % 1 === 0 ? current : current.toFixed(1)}h / ${target}h`
+                  } else {
+                    return <span className="text-muted-foreground">—</span>
+                  }
+
+                  const pct = (current / target) * 100
                   const over = pct >= 100
                   const cx = 9, cy = 9, ringR = 5.5, dotR = 1.5
                   const dots = Array.from({ length: 8 }, (_, i) => {
@@ -264,6 +260,7 @@ export function ProjectList({
                     return { x: cx + ringR * Math.cos(angle), y: cy + ringR * Math.sin(angle) }
                   })
                   const filledCount = (pct / 100) * 8
+
                   return (
                     <div className="flex items-center gap-2.5">
                       <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0">
@@ -279,7 +276,7 @@ export function ProjectList({
                         })}
                       </svg>
                       <span className={`text-sm ${over ? 'font-medium' : 'text-muted-foreground'}`} style={over ? { color: '#C75042' } : undefined}>
-                        {logged % 1 === 0 ? logged : logged.toFixed(1)}h / {estimate}h
+                        {label}
                       </span>
                     </div>
                   )
@@ -302,23 +299,6 @@ export function ProjectList({
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(project)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <AlertDialog open={deleteId === project.id} onOpenChange={(open) => setDeleteId(open ? project.id : null)}>
-                    <AlertDialogTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" />}>
-                      <Trash2 className="h-4 w-4" />
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete project?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete "{project.name}". Time entries linked to this project will not be deleted but will no longer have a project assigned.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(project.id)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </div>
               </TableCell>
             </TableRow>
