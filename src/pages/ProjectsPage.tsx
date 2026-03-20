@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useProjects } from '@/hooks/useProjects'
@@ -103,17 +104,13 @@ export default function ProjectsPage() {
           <TabsTrigger value="active">
             Active
             {active.length > 0 && (
-              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                {active.length}
-              </span>
+              <Badge variant="muted" className="ml-2">{active.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="completed">
             Completed
             {completed.length > 0 && (
-              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                {completed.length}
-              </span>
+              <Badge variant="muted" className="ml-2">{completed.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>

@@ -12,6 +12,8 @@ interface FetchOptions {
   projectId?: string
   isPaid?: boolean
   isInvoiced?: boolean
+  limit?: number
+  offset?: number
 }
 
 export function useTimeEntries(options: FetchOptions = {}) {
@@ -41,11 +43,15 @@ export function useTimeEntries(options: FetchOptions = {}) {
     if (options.projectId) query = query.eq('project_id', options.projectId)
     if (options.isPaid !== undefined)     query = query.eq('is_paid', options.isPaid)
     if (options.isInvoiced !== undefined) query = query.eq('is_invoiced', options.isInvoiced)
+    if (options.limit) {
+      const start = options.offset ?? 0
+      query = query.range(start, start + options.limit - 1)
+    }
 
     const { data } = await query
     setEntries((data as TimeEntryWithProject[]) ?? [])
     setLoading(false)
-  }, [user, options.startDate, options.endDate, options.projectId, options.isPaid, options.isInvoiced])
+  }, [user, options.startDate, options.endDate, options.projectId, options.isPaid, options.isInvoiced, options.limit, options.offset])
 
   useEffect(() => { fetchEntries() }, [fetchEntries])
 

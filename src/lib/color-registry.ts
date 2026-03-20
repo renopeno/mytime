@@ -25,6 +25,17 @@ export type ColorEntry = {
 export const colorRegistry: ColorEntry[] = [
   // ─── Neutral Scale ─────────────────────────────────────────────────────
   {
+    id: 'neutral-0',
+    value: '#fffbf7',
+    token: '--neutral-0',
+    tailwindClass: 'neutral-0',
+    primitive: null,
+    category: 'primitive-neutral',
+    label: 'Neutral 0',
+    usedIn: ['index.css'],
+    status: 'tokenized',
+  },
+  {
     id: 'neutral-10',
     value: '#f9f4ef',
     token: '--neutral-10',
@@ -196,6 +207,7 @@ export const colorRegistry: ColorEntry[] = [
   { id: 'status-paid', value: '#45825d', token: '--status-paid', tailwindClass: 'status-paid', primitive: null, category: 'status', label: 'Paid', usedIn: ['ProjectList.tsx', 'TimeEntryList.tsx', 'InvoicingPage.tsx', 'ReportsPage.tsx'], status: 'tokenized' },
   { id: 'status-invoiced', value: '#fddd74', token: '--status-invoiced', tailwindClass: 'status-invoiced', primitive: null, category: 'status', label: 'Invoiced', usedIn: ['InvoicingPage.tsx', 'ReportsPage.tsx'], status: 'tokenized' },
   { id: 'status-not-paid', value: '#e1d4c0', token: '--status-not-paid', tailwindClass: 'status-not-paid', primitive: null, category: 'status', label: 'Not Paid', usedIn: ['InvoicingPage.tsx', 'ReportsPage.tsx'], status: 'tokenized' },
+  { id: 'status-new', value: '#f989e4', token: '--status-new', tailwindClass: 'status-new', primitive: null, category: 'status', label: 'New', usedIn: ['ImportWizard.tsx'], status: 'tokenized' },
 
   // ─── Chart (tokenized) ────────────────────────────────────────────────
   { id: 'chart-1', value: '#2B4D3F', token: '--chart-1', tailwindClass: 'chart-1', primitive: 'green-80', category: 'chart', label: 'Chart 1 (Green)', usedIn: ['ReportsPage.tsx'], status: 'tokenized' },

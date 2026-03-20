@@ -19,6 +19,11 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        paid: "bg-status-paid text-white/90",
+        invoiced: "bg-status-invoiced text-black/60",
+        "not-paid": "bg-status-not-paid text-black/60",
+        new: "bg-status-new text-white/90",
+        muted: "bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

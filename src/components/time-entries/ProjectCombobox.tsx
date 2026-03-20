@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Check } from 'lucide-react'
 import { useProjects } from '@/hooks/useProjects'
 import { cn } from '@/lib/utils'
@@ -16,9 +16,30 @@ export function ProjectCombobox({ value, onValueChange, placeholder = 'Project',
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const blurTimeout = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const isPreFilled = useRef(false)
+  const needsSelect = useRef(false)
 
   const selected = projects.find(p => p.id === value)
-  const filtered = search
+
+  // When projects load after autoFocus already fired, pre-fill the search
+  useEffect(() => {
+    if (open && isPreFilled.current && !search && selected) {
+      setSearch(selected.name)
+      needsSelect.current = true
+    }
+  }, [open, search, selected])
+
+  // Select text after React commits the new search value to the DOM
+  useEffect(() => {
+    if (needsSelect.current && search && inputRef.current) {
+      inputRef.current.select()
+      needsSelect.current = false
+    }
+  })
+
+  const isActiveSearch = search && !isPreFilled.current
+  const filtered = isActiveSearch
     ? projects.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.client?.name ?? '').toLowerCase().includes(search.toLowerCase())
@@ -26,13 +47,15 @@ export function ProjectCombobox({ value, onValueChange, placeholder = 'Project',
     : projects
 
   // Ghost text: first project whose name starts with the typed text
-  const ghostProject = search
+  const ghostProject = isActiveSearch
     ? projects.find(p => p.name.toLowerCase().startsWith(search.toLowerCase()))
     : null
   const ghostSuffix = ghostProject ? ghostProject.name.substring(search.length) : null
 
   function handleFocus() {
-    setSearch('')
+    setSearch(selected?.name ?? '')
+    isPreFilled.current = true
+    needsSelect.current = true
     setOpen(true)
   }
 
@@ -81,15 +104,16 @@ export function ProjectCombobox({ value, onValueChange, placeholder = 'Project',
         </div>
       )}
       <input
+        ref={inputRef}
         type="text"
         value={displayValue}
-        onChange={e => setSearch(e.target.value)}
+        onChange={e => { isPreFilled.current = false; setSearch(e.target.value) }}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className={cn("h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring", inputClassName)}
+        className={cn("h-9 w-full rounded-[10px] border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/50", inputClassName)}
       />
       {open && (
         <div className="absolute top-full z-50 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">

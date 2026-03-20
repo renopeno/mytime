@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -157,7 +159,8 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess, onDelete, 
           <DialogTitle>{isEditing ? 'Edit Project' : 'Add Project'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-1 flex-col min-h-0">
+            <DialogBody className="space-y-6">
             {/* General */}
             <div className="overflow-hidden rounded-[10px] border border-neutral-30 bg-neutral-10">
               <div className="flex h-10 items-center bg-neutral-20/50 px-6">
@@ -341,8 +344,8 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess, onDelete, 
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="-mx-8 -mb-8 flex items-center rounded-b-[14px] border-t border-neutral-30 bg-neutral-20 px-6 py-4">
+            </DialogBody>
+            <DialogFooter className="sm:justify-between">
               {/* Left: delete (edit mode only) */}
               <div className="flex-1">
                 {isEditing && onDelete && project && (
@@ -382,7 +385,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess, onDelete, 
                   {isEditing ? 'Update' : 'Create Project'}
                 </Button>
               </div>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

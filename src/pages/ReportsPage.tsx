@@ -1103,7 +1103,7 @@ export default function ReportsPage() {
   }
 
   const projectItems = projects.map((p) => ({ id: p.id, name: p.name, color: p.client?.color ?? '#6789b9' }))
-  const clientItems = clients.map((c) => ({ id: c.id, name: c.name }))
+  const clientItems = clients.map((c) => ({ id: c.id, name: c.name, color: c.color ?? '#6789b9' }))
 
   return (
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
@@ -1116,7 +1116,7 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      {/* Date Range Picker */}
+      {/* Date Range Picker + Compare */}
       <div className="flex flex-wrap items-center gap-3">
         <DateRangePicker value={dateRange} onChange={setDateRange} className="w-full sm:w-auto" />
         {compareMode && (
@@ -1125,21 +1125,28 @@ export default function ReportsPage() {
             <DateRangePicker value={compareDateRange} onChange={setCompareDateRange} className="w-full sm:w-auto" />
           </>
         )}
+        <Button
+          variant={compareMode ? 'default' : 'outline'}
+          onClick={() => setCompareMode(!compareMode)}
+        >
+          <ArrowLeftRight className="mr-1.5 h-4 w-4" />
+          Compare
+        </Button>
       </div>
 
       {/* Filter row */}
       <div className="flex flex-wrap items-center gap-3">
         <MultiSelectFilter
-          label="Projects"
-          items={projectItems}
-          selectedIds={selectedProjectIds}
-          onSelectionChange={setSelectedProjectIds}
-        />
-        <MultiSelectFilter
           label="Clients"
           items={clientItems}
           selectedIds={selectedClientIds}
           onSelectionChange={setSelectedClientIds}
+        />
+        <MultiSelectFilter
+          label="Projects"
+          items={projectItems}
+          selectedIds={selectedProjectIds}
+          onSelectionChange={setSelectedProjectIds}
         />
         <MultiSelectFilter
           label="statuses"
@@ -1151,15 +1158,6 @@ export default function ReportsPage() {
           selectedIds={selectedBillingStatuses}
           onSelectionChange={(ids) => setSelectedBillingStatuses(ids as BillingStatusValue[])}
         />
-        <Button
-          variant={compareMode ? 'default' : 'outline'}
-          size="sm"
-          className="ml-auto"
-          onClick={() => setCompareMode(!compareMode)}
-        >
-          <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" />
-          Compare
-        </Button>
       </div>
 
       {/* KPI Cards */}

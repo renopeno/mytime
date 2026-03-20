@@ -1,16 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { toast } from 'sonner'
 import { useTimeEntries } from '@/hooks/useTimeEntries'
 import { useSettings } from '@/hooks/useSettings'
 import { TimeEntryList } from '@/components/time-entries/TimeEntryList'
-import { TimeEntryFilters } from '@/components/time-entries/TimeEntryFilters'
 import { QuickEntryForm } from '@/components/time-entries/QuickEntryForm'
 import { formatDuration } from '@/lib/duration'
 import { formatCurrency } from '@/lib/format'
 import { resolveHourlyRate } from '@/lib/rate'
+import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import type { TimeEntryWithProject } from '@/types/app.types'
+
+const PAGE_SIZE = 100
 
 function weeklyTarget(dailyHours: number) {
   return dailyHours * 5 * 60 // 5 working days in minutes
@@ -46,19 +48,25 @@ function ComparisonBadge({ current, previous, formatter, label = 'vs last week' 
 
 export default function TimeEntriesPage() {
   const [quickDate, setQuickDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [projectId, setProjectId] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const { settings } = useSettings()
   const WEEKLY_TARGET = weeklyTarget(settings?.daily_hours_target ?? 8)
 
-  const { entries, loading, createEntry, updateEntry, deleteEntry, duplicateEntry } = useTimeEntries({
-    startDate: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
-    endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
-    projectId: projectId || undefined,
-  })
+  // Measure sticky form height so the rounded cap sticks right below it
+  const stickyFormRef = useRef<HTMLDivElement>(null)
+  const [formHeight, setFormHeight] = useState(0)
+  useEffect(() => {
+    const el = stickyFormRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setFormHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const { entries: allEntries, loading, createEntry, updateEntry, deleteEntry, duplicateEntry } = useTimeEntries({})
+  const entries = useMemo(() => allEntries.slice(0, visibleCount), [allEntries, visibleCount])
+  const hasMore = allEntries.length > visibleCount
 
   // ── KPI data (always current week / month, never affected by filters) ──
   const now = new Date()
@@ -166,8 +174,8 @@ export default function TimeEntriesPage() {
   return (
     <div>
 
-      {/* Sticky zone — only quick entry form */}
-      <div className="sticky top-0 z-20 bg-muted">
+      {/* Sticky zone — quick entry form only */}
+      <div ref={stickyFormRef} className="sticky top-0 z-20 bg-muted">
         <div className="px-5 md:px-6 pt-6 pb-5">
           <QuickEntryForm
             onSubmit={createEntry}
@@ -177,7 +185,7 @@ export default function TimeEntriesPage() {
         </div>
       </div>
 
-      {/* Scrollable: progress bar + KPIs + rounded cap */}
+      {/* Scrollable: progress bar + KPIs */}
       <div className="bg-muted">
         <div className="px-5 md:px-6">
           {/* Weekly progress bar — project-colored, full width */}
@@ -255,25 +263,16 @@ export default function TimeEntriesPage() {
           </div>
         </div>
 
-        {/* Rounded white cap — sits outside padded area for full width without overflow-hidden */}
-        <div className="mt-5 h-[32px] bg-background rounded-t-[16px] shadow-[0px_-2px_12px_0px_rgba(0,0,0,0.02)]" />
+        <div className="h-5" />
       </div>
 
-      {/* Filters — scrollable */}
-      <div className="bg-background px-5 md:px-6 pb-2">
-        <TimeEntryFilters
-          startDate={startDate}
-          endDate={endDate}
-          projectId={projectId}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onProjectChange={setProjectId}
-          onClear={() => {
-            setStartDate(undefined)
-            setEndDate(undefined)
-            setProjectId('')
-          }}
-        />
+      {/* Rounded white cap — sticky, sticks below form when KPIs scroll away.
+           bg-muted wrapper ensures corner gaps show muted color when sticky. */}
+      <div
+        className="sticky z-10 bg-muted"
+        style={{ top: formHeight > 0 ? `${formHeight}px` : undefined }}
+      >
+        <div className="h-[16px] bg-background rounded-t-[16px] shadow-[0px_-2px_12px_0px_rgba(0,0,0,0.02)]" />
       </div>
 
       {/* Scrollable content */}
@@ -286,13 +285,25 @@ export default function TimeEntriesPage() {
               ))}
             </div>
           ) : (
-            <TimeEntryList
-              entries={entries}
-              onDelete={handleDelete}
-              onDuplicate={handleDuplicate}
-              onUpdate={handleUpdate}
-              onAdd={handleAdd}
-            />
+            <>
+              <TimeEntryList
+                entries={entries}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onUpdate={handleUpdate}
+                onAdd={handleAdd}
+              />
+              {hasMore && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                  >
+                    Load more
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

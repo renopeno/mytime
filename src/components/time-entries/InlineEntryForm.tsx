@@ -96,7 +96,7 @@ export function InlineEntryForm({ date, onSubmit, onCancel }: InlineEntryFormPro
           onChange={handleDurationChange}
           onKeyDown={handleDurationKeyDown}
           placeholder="0:00"
-          className="h-7 w-full rounded border px-1 text-right text-sm focus-visible:ring-1 focus-visible:ring-offset-0"
+          className="h-7 w-full rounded-[10px] border px-1 text-right text-sm focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/50"
         />
       </div>
 

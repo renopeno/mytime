@@ -22,7 +22,7 @@ export function DateDurationInput({
   const dateLabel = isToday(dateObj) ? 'Today' : format(dateObj, 'd MMM')
 
   return (
-    <div className="flex h-9 items-center overflow-hidden rounded-lg border border-input bg-background text-sm focus-within:ring-2 focus-within:ring-ring">
+    <div className="flex h-9 items-center overflow-hidden rounded-[10px] border border-input bg-background text-sm focus-within:ring-3 focus-within:ring-accent/50 focus-within:border-accent">
       <Popover open={calOpen} onOpenChange={setCalOpen}>
         <PopoverTrigger
           render={

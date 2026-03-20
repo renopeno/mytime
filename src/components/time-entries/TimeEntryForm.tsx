@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -115,7 +116,8 @@ export function TimeEntryForm({
           <DialogTitle>{isEditing ? 'Edit Time Entry' : 'Add Time Entry'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-1 flex-col min-h-0">
+            <DialogBody className="space-y-4">
             <FormField
               control={form.control}
               name="date"
@@ -207,6 +209,7 @@ export function TimeEntryForm({
               )}
             />
 
+            </DialogBody>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

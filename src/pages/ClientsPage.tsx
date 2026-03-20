@@ -5,6 +5,7 @@ import { useClients } from '@/hooks/useClients'
 import type { Client } from '@/types/app.types'
 import { ClientList } from '@/components/clients/ClientList'
 import { ClientForm } from '@/components/clients/ClientForm'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
@@ -104,17 +105,13 @@ export default function ClientsPage() {
           <TabsTrigger value="active">
             Active
             {active.length > 0 && (
-              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                {active.length}
-              </span>
+              <Badge variant="muted" className="ml-2">{active.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="inactive">
             Inactive
             {inactive.length > 0 && (
-              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                {inactive.length}
-              </span>
+              <Badge variant="muted" className="ml-2">{inactive.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>

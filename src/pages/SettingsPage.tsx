@@ -14,28 +14,29 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-5 py-6 md:px-8 md:py-8">
-      <h1 className="font-serif text-3xl font-normal tracking-tight">Settings</h1>
+      <h1 className="font-serif text-3xl font-normal tracking-tight pt-4">Settings</h1>
       <SettingsForm />
 
-      {/* Import CSV section */}
-      <div className="flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10">
-        <div className="px-4">
-          <h2 className="font-serif text-lg font-normal">Import CSV</h2>
+      {/* Import */}
+      <div className="overflow-hidden rounded-[10px] border border-neutral-30 bg-neutral-0">
+        <div className="flex h-10 items-center bg-neutral-20/50 px-6">
+          <p className="text-[11px] font-medium uppercase tracking-[0.55px] text-muted-foreground">Data</p>
         </div>
-        <div className="space-y-3 px-4">
-          <p className="text-sm text-muted-foreground">
-            Import time entries from another time tracking tool (Toggl, Clockify, Harvest, or any CSV)
-          </p>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            Import CSV
+        <div className="flex items-center justify-between gap-6 px-6 py-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">Import CSV</p>
+            <p className="text-[13px] text-muted-foreground">From Toggl, Clockify, Harvest, or any CSV</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
+            Import
           </Button>
         </div>
       </div>
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="sm:max-w-5xl flex max-h-[85vh] flex-col overflow-hidden">
-          <ImportWizard onComplete={() => setImportOpen(false)} />
+        <DialogContent className="sm:max-w-5xl sm:h-[min(85vh,720px)]">
+          <ImportWizard onComplete={() => setImportOpen(false)} onCancel={() => setImportOpen(false)} />
         </DialogContent>
       </Dialog>
 

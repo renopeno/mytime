@@ -46,6 +46,11 @@ export interface Database {
           id: string
           user_id: string
           company_name: string | null
+          company_address: string | null
+          company_city: string | null
+          company_zip: string | null
+          company_country: string | null
+          company_vat_id: string | null
           default_hourly_rate: number
           rounding_mode: string
           onboarding_completed: boolean
@@ -57,6 +62,11 @@ export interface Database {
           id?: string
           user_id: string
           company_name?: string | null
+          company_address?: string | null
+          company_city?: string | null
+          company_zip?: string | null
+          company_country?: string | null
+          company_vat_id?: string | null
           default_hourly_rate?: number
           rounding_mode?: string
           onboarding_completed?: boolean
@@ -68,6 +78,11 @@ export interface Database {
           id?: string
           user_id?: string
           company_name?: string | null
+          company_address?: string | null
+          company_city?: string | null
+          company_zip?: string | null
+          company_country?: string | null
+          company_vat_id?: string | null
           default_hourly_rate?: number
           rounding_mode?: string
           onboarding_completed?: boolean

@@ -130,11 +130,11 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate,
         {/* Status + amount */}
         <div className="flex items-center gap-2">
           {entry.is_paid ? (
-            <Badge className="bg-status-paid text-xs text-white/90">Paid</Badge>
+            <Badge variant="paid">Paid</Badge>
           ) : entry.is_invoiced ? (
-            <Badge className="bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
+            <Badge variant="invoiced">Invoiced</Badge>
           ) : (
-            <Badge className="bg-status-not-paid text-xs text-black/60">Not paid</Badge>
+            <Badge variant="not-paid">Not paid</Badge>
           )}
           <span className="text-xs text-muted-foreground/60">
             {formatCurrency(amount)}
@@ -246,11 +246,11 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate,
         <Popover open={statusOpen} onOpenChange={setStatusOpen}>
           <PopoverTrigger render={<div className="cursor-pointer" />}>
             {entry.is_paid ? (
-              <Badge className="cursor-pointer bg-status-paid text-xs text-white/90">Paid</Badge>
+              <Badge variant="paid" className="cursor-pointer">Paid</Badge>
             ) : entry.is_invoiced ? (
-              <Badge className="cursor-pointer bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
+              <Badge variant="invoiced" className="cursor-pointer">Invoiced</Badge>
             ) : (
-              <Badge className="cursor-pointer bg-status-not-paid text-xs text-black/60">Not paid</Badge>
+              <Badge variant="not-paid" className="cursor-pointer">Not paid</Badge>
             )}
           </PopoverTrigger>
           <PopoverContent className="w-36 gap-0 p-1" align="start">
@@ -300,7 +300,7 @@ export function TimeEntryRow({ entry, settings, onDelete, onDuplicate, onUpdate,
               if (e.key === 'Enter') { e.preventDefault(); saveDuration() }
               if (e.key === 'Escape') { setDuration(entry.duration_minutes); setEditingField(null) }
             }}
-            className="h-7 w-full rounded border px-1 text-right text-sm focus-visible:ring-1 focus-visible:ring-offset-0"
+            className="h-7 w-full rounded-[10px] border px-1 text-right text-sm focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/50"
           />
         ) : (
           <span

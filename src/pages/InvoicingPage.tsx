@@ -1,20 +1,15 @@
-import { useState, useMemo } from 'react'
-import {
-  format,
-  startOfWeek, endOfWeek,
-  startOfMonth, endOfMonth,
-  startOfYear, endOfYear,
-  subWeeks, subMonths, subYears,
-} from 'date-fns'
-import type { DateRange } from 'react-day-picker'
-import { CalendarIcon, Check, ChevronRight } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { Check, ChevronDown, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTimeEntries } from '@/hooks/useTimeEntries'
+import { useProjects } from '@/hooks/useProjects'
+import { useClients } from '@/hooks/useClients'
 import { useSettings } from '@/hooks/useSettings'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatDuration } from '@/lib/duration'
 import { formatDate, formatCurrency } from '@/lib/format'
-import { ProjectSelect } from '@/components/projects/ProjectSelect'
+import { resolveHourlyRate } from '@/lib/rate'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
@@ -34,166 +29,351 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BulkActionBar } from '@/components/ui/bulk-action-bar'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
+import type { DateRange } from '@/components/ui/date-range-picker'
+import { DurationInput } from '@/components/time-entries/DurationInput'
+import { ProjectCombobox } from '@/components/time-entries/ProjectCombobox'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useShiftSelect } from '@/hooks/useShiftSelect'
 import type { TimeEntryWithProject } from '@/types/app.types'
 
 type PaidFilter = 'unpaid' | 'paid' | 'all'
-type InvoicedFilter = 'all' | 'invoiced' | 'not_invoiced'
 
-const INVOICED_LABELS: Record<InvoicedFilter, string> = {
-  all: 'Invoiced status',
-  invoiced: 'Invoiced',
-  not_invoiced: 'Not invoiced',
+// ─── Multi-Select Filter (same as Reports) ──────────────────────────────────
+
+function MultiSelectFilter({
+  label,
+  items,
+  selectedIds,
+  onSelectionChange,
+}: {
+  label: string
+  items: Array<{ id: string; name: string; color?: string }>
+  selectedIds: string[]
+  onSelectionChange: (ids: string[]) => void
+}) {
+  const selectedSet = new Set(selectedIds)
+  const displayLabel =
+    selectedIds.length === 0
+      ? `All ${label}`
+      : selectedIds.length === 1
+        ? items.find((i) => i.id === selectedIds[0])?.name ?? `1 ${label.slice(0, -1)}`
+        : `${selectedIds.length} ${label}`
+
+  function toggle(id: string) {
+    if (selectedSet.has(id)) {
+      onSelectionChange(selectedIds.filter((i) => i !== id))
+    } else {
+      onSelectionChange([...selectedIds, id])
+    }
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button variant="outline" size="sm" className="gap-1.5 font-normal" />
+        }
+      >
+        <span className="truncate max-w-[140px]">{displayLabel}</span>
+        <ChevronDown className="size-3.5 text-muted-foreground" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-1">
+        {items.length === 0 ? (
+          <div className="px-2 py-3 text-sm text-muted-foreground">No items</div>
+        ) : (
+          <div className="max-h-[240px] overflow-y-auto">
+            {items.map((item) => (
+              <label
+                key={item.id}
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted cursor-pointer"
+              >
+                <Checkbox
+                  checked={selectedSet.has(item.id)}
+                  onCheckedChange={() => toggle(item.id)}
+                />
+                {item.color && (
+                  <span
+                    className="inline-block h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                )}
+                <span className="truncate">{item.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        {selectedIds.length > 0 && (
+          <div className="border-t border-border pt-1 mt-1">
+            <button
+              className="w-full rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted"
+              onClick={() => onSelectionChange([])}
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
 }
-type DatePreset = 'all_time' | 'this_week' | 'this_month' | 'last_week' | 'last_month' | 'this_year' | 'last_year' | 'custom'
 
-const DATE_PRESETS: { value: DatePreset; label: string }[] = [
-  { value: 'all_time',    label: 'All time' },
-  { value: 'this_week',   label: 'This week' },
-  { value: 'this_month',  label: 'This month' },
-  { value: 'last_week',   label: 'Last week' },
-  { value: 'last_month',  label: 'Last month' },
-  { value: 'this_year',   label: 'This year' },
-  { value: 'last_year',   label: 'Last year' },
-  { value: 'custom',      label: 'Custom...' },
-]
+// ─── Inline Editable Cell ────────────────────────────────────────────────────
+
+function EditableText({
+  value,
+  onSave,
+  className,
+}: {
+  value: string
+  onSave: (val: string) => void
+  className?: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function startEdit() {
+    setDraft(value)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  function commit() {
+    setEditing(false)
+    if (draft !== value) onSave(draft)
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        className={cn('h-7 w-full rounded-[10px] border px-2 text-sm outline-none focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/50', className)}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+          if (e.key === 'Escape') setEditing(false)
+        }}
+        autoFocus
+      />
+    )
+  }
+
+  return (
+    <span className={cn('cursor-text', className)} onClick={startEdit}>
+      {value || <span className="text-muted-foreground italic">—</span>}
+    </span>
+  )
+}
+
+function EditableDuration({
+  value,
+  onSave,
+}: {
+  value: number
+  onSave: (minutes: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  function startEdit() {
+    setDraft(value)
+    setEditing(true)
+  }
+
+  function commit() {
+    setEditing(false)
+    if (draft !== value) onSave(draft)
+  }
+
+  if (editing) {
+    return (
+      <DurationInput
+        autoFocus
+        value={draft}
+        onChange={setDraft}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit() }
+          if (e.key === 'Escape') setEditing(false)
+        }}
+        onBlur={commit}
+        className="h-7 w-full rounded-[10px] border px-1 text-right text-sm focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-accent/50"
+      />
+    )
+  }
+
+  return (
+    <span className="cursor-text" onClick={startEdit}>
+      {formatDuration(value)}
+    </span>
+  )
+}
+
+function EditableDate({
+  value,
+  onSave,
+}: {
+  value: string
+  onSave: (date: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <button type="button" className="cursor-text whitespace-nowrap text-left hover:underline" />
+        }
+      >
+        {formatDate(value)}
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={new Date(value + 'T00:00:00')}
+          onSelect={(d) => {
+            if (d) {
+              const formatted = format(d, 'yyyy-MM-dd')
+              if (formatted !== value) onSave(formatted)
+              setOpen(false)
+            }
+          }}
+          weekStartsOn={1}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// ─── Status Cell ─────────────────────────────────────────────────────────────
+
+function StatusCell({
+  entry,
+  onUpdate,
+}: {
+  entry: TimeEntryWithProject
+  onUpdate: (updates: { is_paid?: boolean; is_invoiced?: boolean }) => void
+}) {
+  const label = entry.is_paid ? 'Paid' : entry.is_invoiced ? 'Invoiced' : 'Not paid'
+  const variant = entry.is_paid ? 'paid' : entry.is_invoiced ? 'invoiced' : 'not-paid'
+
+  return (
+    <Popover>
+      <PopoverTrigger render={<button type="button" className="cursor-pointer" />}>
+        <Badge variant={variant as 'paid' | 'invoiced' | 'not-paid'}>{label}</Badge>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-36 p-1">
+        <button
+          type="button"
+          onClick={() => onUpdate({ is_paid: false, is_invoiced: false })}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
+        >
+          <span className="h-2 w-2 rounded-full bg-status-not-paid" />
+          Not paid
+        </button>
+        <button
+          type="button"
+          onClick={() => onUpdate({ is_paid: false, is_invoiced: true })}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
+        >
+          <span className="h-2 w-2 rounded-full bg-status-invoiced" />
+          Invoiced
+        </button>
+        <button
+          type="button"
+          onClick={() => onUpdate({ is_paid: true, is_invoiced: true })}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
+        >
+          <span className="h-2 w-2 rounded-full bg-status-paid" />
+          Paid
+        </button>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function InvoicingPage() {
   const isMobile = useIsMobile()
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [datePreset, setDatePreset] = useState<DatePreset>('all_time')
-  const [customRange, setCustomRange] = useState<DateRange | undefined>(undefined)
-  const [datePickerOpen, setDatePickerOpen] = useState(false)
-  const [projectId, setProjectId] = useState('')
+  const now = new Date()
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfMonth(now),
+    to: endOfMonth(now),
+  })
   const [paidFilter, setPaidFilter] = useState<PaidFilter>('unpaid')
-  const [invoicedFilter, setInvoicedFilter] = useState<InvoicedFilter>('all')
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const { settings } = useSettings()
-
-  function applyPreset(preset: DatePreset) {
-    const now = new Date()
-    setDatePreset(preset)
-    if (preset === 'custom') return
-    setCustomRange(undefined)
-    if (preset === 'all_time') {
-      setStartDate(undefined)
-      setEndDate(undefined)
-      setDatePickerOpen(false)
-      return
-    }
-    switch (preset) {
-      case 'this_week':
-        setStartDate(startOfWeek(now, { weekStartsOn: 1 }))
-        setEndDate(endOfWeek(now, { weekStartsOn: 1 }))
-        break
-      case 'this_month':
-        setStartDate(startOfMonth(now))
-        setEndDate(endOfMonth(now))
-        break
-      case 'last_week': {
-        const lw = subWeeks(now, 1)
-        setStartDate(startOfWeek(lw, { weekStartsOn: 1 }))
-        setEndDate(endOfWeek(lw, { weekStartsOn: 1 }))
-        break
-      }
-      case 'last_month': {
-        const lm = subMonths(now, 1)
-        setStartDate(startOfMonth(lm))
-        setEndDate(endOfMonth(lm))
-        break
-      }
-      case 'this_year':
-        setStartDate(startOfYear(now))
-        setEndDate(endOfYear(now))
-        break
-      case 'last_year': {
-        const ly = subYears(now, 1)
-        setStartDate(startOfYear(ly))
-        setEndDate(endOfYear(ly))
-        break
-      }
-    }
-    setDatePickerOpen(false)
-  }
-
-  function handleCustomRangeSelect(range: DateRange | undefined) {
-    setCustomRange(range)
-    setStartDate(range?.from)
-    const hasFullRange =
-      range?.from &&
-      range?.to &&
-      format(range.from, 'yyyy-MM-dd') !== format(range.to, 'yyyy-MM-dd')
-    if (hasFullRange) {
-      setEndDate(range!.to)
-      setDatePickerOpen(false)
-    } else {
-      setEndDate(undefined)
-    }
-  }
-
-  function getDateLabel(): string {
-    if (datePreset === 'custom' && startDate && endDate) {
-      return `${format(startDate, 'dd.MM.yy')} – ${format(endDate, 'dd.MM.yy')}`
-    }
-    const preset = DATE_PRESETS.find((p) => p.value === datePreset)
-    return preset?.label ?? 'All time'
-  }
+  const { projects } = useProjects()
+  const { clients } = useClients()
 
   const fetchOptions = useMemo(() => {
     const opts: {
       startDate?: string
       endDate?: string
-      projectId?: string
       isPaid?: boolean
-      isInvoiced?: boolean
-    } = {}
-
-    if (startDate) opts.startDate = format(startDate, 'yyyy-MM-dd')
-    if (endDate) opts.endDate = format(endDate, 'yyyy-MM-dd')
-    if (projectId) opts.projectId = projectId
+    } = {
+      startDate: format(dateRange.from, 'yyyy-MM-dd'),
+      endDate: format(dateRange.to, 'yyyy-MM-dd'),
+    }
 
     if (paidFilter === 'unpaid') opts.isPaid = false
     else if (paidFilter === 'paid') opts.isPaid = true
 
-    if (paidFilter !== 'paid') {
-      if (invoicedFilter === 'invoiced') opts.isInvoiced = true
-      else if (invoicedFilter === 'not_invoiced') opts.isInvoiced = false
-    }
-
     return opts
-  }, [startDate, endDate, projectId, paidFilter, invoicedFilter])
+  }, [dateRange, paidFilter])
 
-  const { entries, loading, bulkUpdatePaid, bulkUpdateInvoiced } =
+  const { entries: rawEntries, loading, updateEntry, deleteEntry, bulkUpdatePaid, bulkUpdateInvoiced } =
     useTimeEntries(fetchOptions)
+
+  // Client-side filtering for project/client multi-select
+  const entries = useMemo(() => {
+    let filtered = rawEntries
+    if (selectedProjectIds.length > 0) {
+      const set = new Set(selectedProjectIds)
+      filtered = filtered.filter(e => e.project_id && set.has(e.project_id))
+    }
+    if (selectedClientIds.length > 0) {
+      const set = new Set(selectedClientIds)
+      filtered = filtered.filter(e => e.project?.client_id && set.has(e.project.client_id))
+    }
+    return filtered
+  }, [rawEntries, selectedProjectIds, selectedClientIds])
 
   const defaultRate = settings?.default_hourly_rate ?? 0
 
   function getEffectiveRate(entry: TimeEntryWithProject): number {
-    return entry.project?.hourly_rate ?? defaultRate
+    return resolveHourlyRate(entry.project, entry.project?.client, settings)
   }
 
   function getAmount(entry: TimeEntryWithProject): number {
-    const rate = getEffectiveRate(entry)
-    return (entry.duration_minutes / 60) * rate
+    return (entry.duration_minutes / 60) * getEffectiveRate(entry)
   }
 
   const totals = useMemo(() => {
     const totalMinutes = entries.reduce((sum, e) => sum + e.duration_minutes, 0)
     const totalAmount = entries.reduce((sum, e) => sum + getAmount(e), 0)
     return { totalMinutes, totalAmount }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, defaultRate])
 
   const allSelected =
@@ -211,14 +391,30 @@ export default function InvoicingPage() {
   const entryItems = useMemo(() => entries.map((e) => ({ id: e.id })), [entries])
   const { getClickHandler } = useShiftSelect(entryItems, selectedIds, setSelectedIds)
 
+  async function handleUpdate(id: string, updates: Record<string, unknown>) {
+    const { error } = await updateEntry(id, updates as Parameters<typeof updateEntry>[1])
+    if (error) toast.error('Failed to update entry')
+  }
+
+  async function handleDelete(id: string) {
+    const { error } = await deleteEntry(id)
+    if (error) toast.error('Failed to delete entry')
+    else {
+      toast.success('Entry deleted')
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
   async function handleMarkPaid() {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
-
     const { error } = await bulkUpdatePaid(ids, true)
-    if (error) {
-      toast.error('Failed to mark entries as paid')
-    } else {
+    if (error) toast.error('Failed to mark entries as paid')
+    else {
       toast.success(`${ids.length} ${ids.length === 1 ? 'entry' : 'entries'} marked as paid`)
       setSelectedIds(new Set())
     }
@@ -227,15 +423,16 @@ export default function InvoicingPage() {
   async function handleMarkInvoiced() {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
-
     const { error } = await bulkUpdateInvoiced(ids, true)
-    if (error) {
-      toast.error('Failed to mark entries as invoiced')
-    } else {
+    if (error) toast.error('Failed to mark entries as invoiced')
+    else {
       toast.success(`${ids.length} ${ids.length === 1 ? 'entry' : 'entries'} marked as invoiced`)
       setSelectedIds(new Set())
     }
   }
+
+  const projectItems = projects.map((p) => ({ id: p.id, name: p.name, color: p.client?.color ?? '#6789b9' }))
+  const clientItems = clients.map((c) => ({ id: c.id, name: c.name, color: c.color ?? '#6789b9' }))
 
   return (
     <div className="space-y-6 px-5 py-6 md:px-8 md:py-8">
@@ -247,7 +444,7 @@ export default function InvoicingPage() {
       </div>
 
       {/* Paid tabs */}
-      <Tabs value={paidFilter} onValueChange={(v) => { setPaidFilter(v as PaidFilter); setInvoicedFilter('all'); setSelectedIds(new Set()) }}>
+      <Tabs value={paidFilter} onValueChange={(v) => { setPaidFilter(v as PaidFilter); setSelectedIds(new Set()) }}>
         <TabsList>
           <TabsTrigger value="unpaid">Not paid</TabsTrigger>
           <TabsTrigger value="paid">Paid</TabsTrigger>
@@ -279,81 +476,19 @@ export default function InvoicingPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Date range picker */}
-        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                variant="outline"
-                className={cn(
-                  'justify-start text-left font-normal'
-                )}
-              />
-            }
-          >
-            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-            {getDateLabel()}
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            {datePreset !== 'custom' ? (
-              <div className="flex flex-col py-1 min-w-[160px]">
-                {DATE_PRESETS.map((p) => (
-                  <button
-                    key={p.value}
-                    onClick={() => applyPreset(p.value)}
-                    className={cn(
-                      'flex items-center justify-between px-3 py-1.5 text-sm hover:bg-muted transition-colors text-left',
-                      datePreset === p.value && 'font-medium'
-                    )}
-                  >
-                    {p.label}
-                    {p.value === 'custom' && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col">
-                <button
-                  onClick={() => setDatePreset('all_time')}
-                  className="flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ChevronRight className="h-3 w-3 rotate-180" />
-                  Back
-                </button>
-                <Calendar
-                  mode="range"
-                  numberOfMonths={2}
-                  selected={customRange}
-                  onSelect={handleCustomRangeSelect}
-                  weekStartsOn={1}
-                />
-              </div>
-            )}
-          </PopoverContent>
-        </Popover>
-
-        <div className="w-[200px]">
-          <ProjectSelect
-            value={projectId}
-            onValueChange={setProjectId}
-            placeholder="All projects"
-          />
-        </div>
-
-        {paidFilter !== 'paid' && (
-          <Select value={invoicedFilter} onValueChange={(v) => setInvoicedFilter(v as InvoicedFilter)}>
-            <SelectTrigger className="w-[160px]">
-              <span className={invoicedFilter === 'all' ? 'text-muted-foreground' : ''}>
-                {INVOICED_LABELS[invoicedFilter]}
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="invoiced">Invoiced</SelectItem>
-              <SelectItem value="not_invoiced">Not invoiced</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <MultiSelectFilter
+          label="Clients"
+          items={clientItems}
+          selectedIds={selectedClientIds}
+          onSelectionChange={setSelectedClientIds}
+        />
+        <MultiSelectFilter
+          label="Projects"
+          items={projectItems}
+          selectedIds={selectedProjectIds}
+          onSelectionChange={setSelectedProjectIds}
+        />
       </div>
 
       <BulkActionBar count={selectedIds.size} open={someSelected} onClose={() => setSelectedIds(new Set())}>
@@ -381,7 +516,7 @@ export default function InvoicingPage() {
         )}
       </BulkActionBar>
 
-      {/* Table / Cards */}
+      {/* Table */}
       {loading ? (
         <div className="space-y-3">
           <Skeleton className="h-10 w-full" />
@@ -408,10 +543,9 @@ export default function InvoicingPage() {
                 key={entry.id}
                 className={cn(
                   'rounded-lg border bg-card p-4 space-y-3',
-                  isSelected && 'ring-2 ring-primary/50'
+                  isSelected && 'ring-2 ring-primary/50 bg-primary/[0.03]'
                 )}
               >
-                {/* Top row: checkbox + date/project at left, amount at right */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -424,12 +558,7 @@ export default function InvoicingPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(entry.date)}</p>
                       {entry.project ? (
                         <span className="flex items-center gap-1.5 text-sm font-medium">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger render={<span className="inline-block h-2 w-2 shrink-0 rounded-full cursor-help" style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }} />} />
-                              <TooltipContent>{entry.project.client?.name ?? 'No client'}</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }} />
                           <span className="truncate">{entry.project.name}</span>
                         </span>
                       ) : (
@@ -442,21 +571,15 @@ export default function InvoicingPage() {
                   </span>
                 </div>
 
-                {/* Description */}
                 <p className="text-sm text-muted-foreground truncate pl-8">
                   {entry.description || <span className="italic">No description</span>}
                 </p>
 
-                {/* Bottom row: duration + status badges */}
                 <div className="flex items-center gap-2 pl-8">
                   <span className="text-xs text-muted-foreground">
                     {formatDuration(entry.duration_minutes)}
                   </span>
-                  {entry.is_paid ? (
-                    <Badge className="bg-status-paid text-xs text-white/90">Paid</Badge>
-                  ) : entry.is_invoiced ? (
-                    <Badge className="bg-status-invoiced text-xs text-black/60">Invoiced</Badge>
-                  ) : null}
+                  <StatusCell entry={entry} onUpdate={(u) => handleUpdate(entry.id, u)} />
                 </div>
               </div>
             )
@@ -464,7 +587,7 @@ export default function InvoicingPage() {
         </div>
       ) : (
         <div className="rounded-lg border overflow-hidden">
-          <Table className="[&_td]:py-3">
+          <Table className="[&_td]:py-2.5">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px]">
@@ -474,13 +597,14 @@ export default function InvoicingPage() {
                     aria-label="Select all"
                   />
                 </TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="w-[100px]">Date</TableHead>
                 <TableHead>Project</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
-                <TableHead className="text-right">Rate</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-center">Invoiced</TableHead>
+                <TableHead className="w-[80px] text-right">Duration</TableHead>
+                <TableHead className="w-[80px] text-right">Rate</TableHead>
+                <TableHead className="w-[90px] text-right">Amount</TableHead>
+                <TableHead className="w-[90px] text-center">Status</TableHead>
+                <TableHead className="w-[50px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -492,7 +616,7 @@ export default function InvoicingPage() {
                 return (
                   <TableRow
                     key={entry.id}
-                    className={cn(isSelected && 'bg-muted/50')}
+                    className={cn(isSelected && 'bg-primary/[0.04]')}
                   >
                     <TableCell>
                       <Checkbox
@@ -501,54 +625,69 @@ export default function InvoicingPage() {
                         aria-label={`Select entry ${entry.description}`}
                       />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatDate(entry.date)}
+                    <TableCell>
+                      <EditableDate
+                        value={entry.date}
+                        onSave={(d) => handleUpdate(entry.id, { date: d })}
+                      />
                     </TableCell>
                     <TableCell>
-                      {entry.project ? (
-                        <span className="flex items-center gap-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger render={<span className="inline-block h-2 w-2 shrink-0 rounded-full cursor-help" style={{ backgroundColor: entry.project.client?.color ?? '#6789b9' }} />} />
-                              <TooltipContent>{entry.project.client?.name ?? 'No client'}</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {entry.project.name}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          No project
-                        </span>
-                      )}
+                      <ProjectCombobox
+                        value={entry.project_id ?? ''}
+                        onValueChange={(projectId) => handleUpdate(entry.id, { project_id: projectId || null })}
+                        placeholder="No project"
+                        inputClassName="h-7 !rounded-[10px] !border-transparent !bg-transparent !px-0 hover:!bg-muted/50 focus-visible:!bg-background focus-visible:!border-accent"
+                      />
                     </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
-                      {entry.description || (
-                        <span className="text-muted-foreground">
-                          No description
-                        </span>
-                      )}
+                    <TableCell className="max-w-[300px]">
+                      <EditableText
+                        value={entry.description}
+                        onSave={(desc) => handleUpdate(entry.id, { description: desc })}
+                        className="block truncate text-sm"
+                      />
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      {formatDuration(entry.duration_minutes)}
+                    <TableCell className="text-right">
+                      <EditableDuration
+                        value={entry.duration_minutes}
+                        onSave={(m) => handleUpdate(entry.id, { duration_minutes: m })}
+                      />
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      {rate > 0 ? (
-                        formatCurrency(rate)
-                      ) : (
-                        <span className="text-muted-foreground">--</span>
-                      )}
+                    <TableCell className="text-right whitespace-nowrap text-muted-foreground">
+                      {rate > 0 ? formatCurrency(rate) : '--'}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap font-medium">
-                      {rate > 0 ? (
-                        formatCurrency(amount)
-                      ) : (
-                        <span className="text-muted-foreground">--</span>
-                      )}
+                      {rate > 0 ? formatCurrency(amount) : <span className="text-muted-foreground">--</span>}
                     </TableCell>
                     <TableCell className="text-center">
-                      {(entry.is_invoiced || entry.is_paid) && (
-                        <Check className="mx-auto h-4 w-4 text-emerald-600" />
-                      )}
+                      <StatusCell entry={entry} onUpdate={(u) => handleUpdate(entry.id, u)} />
+                    </TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger
+                          render={
+                            <button
+                              type="button"
+                              className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/row:opacity-100 [tr:hover_&]:opacity-100"
+                            />
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete entry?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete this time entry. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(entry.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 )
@@ -557,7 +696,6 @@ export default function InvoicingPage() {
           </Table>
         </div>
       )}
-
     </div>
   )
 }

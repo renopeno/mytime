@@ -9,6 +9,7 @@ interface DurationInputProps {
   className?: string
   autoFocus?: boolean
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>
+  onBlur?: () => void
 }
 
 export function DurationInput({
@@ -18,6 +19,7 @@ export function DurationInput({
   className,
   autoFocus,
   onKeyDown,
+  onBlur: onBlurProp,
 }: DurationInputProps) {
   const [inputValue, setInputValue] = useState(value > 0 ? formatRaw(value) : '')
   const [isFocused, setIsFocused] = useState(false)
@@ -33,11 +35,12 @@ export function DurationInput({
     setIsFocused(false)
     if (!inputValue.trim()) {
       onChange(0)
-      return
+    } else {
+      const parsed = parseDuration(inputValue)
+      onChange(parsed)
+      setInputValue(formatRaw(parsed))
     }
-    const parsed = parseDuration(inputValue)
-    onChange(parsed)
-    setInputValue(formatRaw(parsed))
+    onBlurProp?.()
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {

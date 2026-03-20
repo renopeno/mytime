@@ -5,7 +5,7 @@
  */
 import type { Client, Project, TimeEntry, Settings, ProjectWithClient, TimeEntryWithProject } from '@/types/app.types'
 
-const DEV_DB_VERSION = 'v12'
+const DEV_DB_VERSION = 'v13'
 const DEV_USER_ID = 'dev-user-id'
 
 const KEYS = {
@@ -131,6 +131,11 @@ function buildSeed() {
     id: uid(),
     user_id: DEV_USER_ID,
     company_name: 'Dev Studio',
+    company_address: 'Ilica 42',
+    company_city: 'Zagreb',
+    company_zip: '10000',
+    company_country: 'Croatia',
+    company_vat_id: 'HR12345678901',
     default_hourly_rate: 75,
     rounding_mode: 'none',
     daily_hours_target: 8,
@@ -238,6 +243,8 @@ export interface DevFetchOptions {
   projectId?: string
   isPaid?: boolean
   isInvoiced?: boolean
+  limit?: number
+  offset?: number
 }
 
 export function devGetTimeEntries(options: DevFetchOptions = {}): TimeEntryWithProject[] {
@@ -250,9 +257,13 @@ export function devGetTimeEntries(options: DevFetchOptions = {}): TimeEntryWithP
   if (options.isPaid !== undefined)     entries = entries.filter(e => e.is_paid === options.isPaid)
   if (options.isInvoiced !== undefined) entries = entries.filter(e => e.is_invoiced === options.isInvoiced)
 
-  return entries
+  let sorted = entries
     .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at))
-    .map(e => ({
+
+  if (options.offset) sorted = sorted.slice(options.offset)
+  if (options.limit) sorted = sorted.slice(0, options.limit)
+
+  return sorted.map(e => ({
       ...e,
       project: projects.find(p => p.id === e.project_id) ?? null,
     }))

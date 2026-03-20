@@ -7,6 +7,7 @@ import { useClients } from '@/hooks/useClients'
 import type { Client } from '@/types/app.types'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -95,7 +96,8 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
           <DialogTitle>{isEditing ? 'Edit Client' : 'Add Client'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col min-h-0">
+            <DialogBody className="space-y-6">
             {/* General */}
             <div className="overflow-hidden rounded-[10px] border border-neutral-30 bg-neutral-10">
               <div className="flex h-10 items-center bg-neutral-20/50 px-6">
@@ -188,6 +190,7 @@ export function ClientForm({ open, onOpenChange, client, onSuccess }: ClientForm
                 )}
               />
             )}
+            </DialogBody>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel

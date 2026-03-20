@@ -21,7 +21,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -287,7 +286,7 @@ function InlineRate({ value, onChange }: { value: number | null; onChange: (v: n
           type="number"
           step="0.01"
           min="0"
-          className="h-7 w-full rounded-md border border-neutral-30 bg-neutral-10 px-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
+          className="h-7 w-full rounded-[10px] border border-neutral-30 bg-neutral-10 px-2 text-sm outline-none focus:border-accent focus:ring-3 focus:ring-accent/50"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}

@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Upload, FileText, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info, Loader2, RotateCcw, ChevronRight } from 'lucide-react'
+import { Upload, FileText, Check, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight, Info, Loader2, RotateCcw, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DialogHeader, DialogBody, DialogFooter, DialogTitle } from '@/components/ui/dialog'
 import {
   Table,
   TableHeader,
@@ -36,12 +37,29 @@ import { useAuth } from '@/hooks/useAuth'
 const DEV = import.meta.env.DEV
 
 // ---------------------------------------------------------------------------
+// New indicator — pink dot that expands to "New" badge on hover
+// ---------------------------------------------------------------------------
+
+function NewIndicator() {
+  return (
+    <span className="group/new relative inline-flex h-5 items-center">
+      {/* Pink dot — visible by default, fades out on hover */}
+      <span className="h-2 w-2 shrink-0 rounded-full bg-status-new transition-opacity duration-200 group-hover/new:opacity-0" />
+      {/* Full badge — hidden by default, fades in + scales up on hover */}
+      <span className="pointer-events-none absolute left-0 inline-flex h-5 items-center rounded-4xl bg-status-new px-2 text-xs font-medium text-white/90 opacity-0 transition-all duration-200 scale-90 group-hover/new:pointer-events-auto group-hover/new:opacity-100 group-hover/new:scale-100">
+        New
+      </span>
+    </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Step definitions
 // ---------------------------------------------------------------------------
 
-type WizardStep = 'upload' | 'preview' | 'mapping' | 'import'
+export type WizardStep = 'upload' | 'preview' | 'mapping' | 'import'
 
-const STEPS: { key: WizardStep; label: string; number: number }[] = [
+export const IMPORT_STEPS: { key: WizardStep; label: string; number: number }[] = [
   { key: 'upload', label: 'Upload', number: 1 },
   { key: 'preview', label: 'Preview', number: 2 },
   { key: 'mapping', label: 'Mapping', number: 3 },
@@ -66,86 +84,73 @@ const PROJECT_COLORS = [
 ]
 
 // ---------------------------------------------------------------------------
-// Step indicator — tiny dots with wavy connectors
+// Step indicator — full-width, clickable, straight lines (dashed/filled)
 // ---------------------------------------------------------------------------
-
-function WaveConnector({ filled }: { filled: boolean }) {
-  // Hand-drawn style: irregular wave with varying amplitudes, wider spacing
-  const d = 'M0,4 Q4,1.5 8,3.5 Q12,6 17,4 Q21,2 25,4.5 Q29,7 34,3.5 Q38,1 42,4 Q46,6.5 50,3.8 Q54,1.5 58,4 Q62,6 66,3.5 Q70,1.5 74,4'
-  return (
-    <svg width="74" height="8" viewBox="0 0 74 8" className="mx-2 shrink-0">
-      {/* Background wave — always visible */}
-      <path d={d} fill="none" strokeWidth="1.5" className="stroke-muted-foreground/15" />
-      {/* Foreground wave — fills in with animation */}
-      <path
-        d={d}
-        fill="none"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        className="stroke-neutral-40 transition-[stroke-dashoffset] duration-700 ease-out"
-        strokeDasharray="94"
-        strokeDashoffset={filled ? '0' : '94'}
-      />
-    </svg>
-  )
-}
 
 function StepIndicator({
   currentStep,
   completedSteps,
+  onStepClick,
 }: {
   currentStep: WizardStep
   completedSteps: Set<WizardStep>
+  onStepClick: (step: WizardStep) => void
 }) {
-  const currentIndex = STEPS.findIndex((s) => s.key === currentStep)
+  const currentIndex = IMPORT_STEPS.findIndex((s) => s.key === currentStep)
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Top row: dots + wave connectors, vertically centered */}
-      <div className="flex items-center">
-        {STEPS.map((step, i) => {
-          const isCurrent = step.key === currentStep
-          const isCompleted = completedSteps.has(step.key)
+    <div className="mt-6 flex w-full max-w-lg items-center">
+      {IMPORT_STEPS.map((step, i) => {
+        const isCurrent = step.key === currentStep
+        const isCompleted = completedSteps.has(step.key)
+        const isReachable = isCompleted || isCurrent
+        const lineFilled = i <= currentIndex
 
-          return (
-            <React.Fragment key={step.key}>
-              {i > 0 && <WaveConnector filled={i <= currentIndex} />}
-              <div
-                className={`h-2.5 w-2.5 shrink-0 rounded-full transition-colors duration-300 ${
-                  isCurrent
-                    ? 'bg-neutral-40'
-                    : isCompleted
+        return (
+          <React.Fragment key={step.key}>
+            {i > 0 && (
+              <div className="flex-1 px-2">
+                <div
+                  className={`h-px transition-colors duration-300 ${
+                    lineFilled
                       ? 'bg-neutral-40'
-                      : 'border-[1.5px] border-muted-foreground/50'
-                }`}
-              />
-            </React.Fragment>
-          )
-        })}
-      </div>
-      {/* Bottom row: labels aligned under each dot */}
-      <div className="flex items-start">
-        {STEPS.map((step, i) => {
-          const isCurrent = step.key === currentStep
-
-          return (
-            <React.Fragment key={step.key}>
-              {i > 0 && (
-                <div className="mx-2 w-[74px] shrink-0" />
-              )}
-              <div className="flex w-2.5 shrink-0 justify-center">
-                <span
-                  className={`whitespace-nowrap text-[13px] font-medium leading-none transition-colors duration-300 ${
-                    isCurrent ? 'text-foreground' : 'text-muted-foreground/60'
+                      : 'border-t border-dashed border-muted-foreground/30'
                   }`}
-                >
-                  {step.label}
-                </span>
+                />
               </div>
-            </React.Fragment>
-          )
-        })}
-      </div>
+            )}
+            <button
+              type="button"
+              onClick={() => isReachable && onStepClick(step.key)}
+              disabled={!isReachable}
+              className="flex shrink-0 items-center gap-2.5 disabled:cursor-default"
+            >
+              <div
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
+                  isCompleted
+                    ? 'bg-primary text-primary-foreground'
+                    : isCurrent
+                      ? 'bg-neutral-40'
+                      : 'border-[1.5px] border-input'
+                }`}
+              >
+                {isCompleted && <Check className="h-3 w-3" strokeWidth={3} />}
+              </div>
+              <span
+                className={`whitespace-nowrap text-[13px] font-normal leading-none transition-colors duration-300 ${
+                  isCurrent
+                    ? 'text-primary'
+                    : isCompleted
+                      ? 'text-muted-foreground hover:text-foreground cursor-pointer'
+                      : 'text-muted-foreground/60'
+                }`}
+              >
+                {step.label}
+              </span>
+            </button>
+          </React.Fragment>
+        )
+      })}
     </div>
   )
 }
@@ -261,7 +266,7 @@ function UploadStep({
   )
 
   return (
-    <div className="flex w-full flex-1 flex-col items-center justify-center">
+    <DialogBody className="flex flex-col items-center pt-4">
       <div
         role="button"
         tabIndex={0}
@@ -310,7 +315,7 @@ function UploadStep({
           <span>{error}</span>
         </div>
       )}
-    </div>
+    </DialogBody>
   )
 }
 
@@ -327,13 +332,13 @@ const FORMAT_LABELS: Record<DetectedFormat['name'], string> = {
 
 function BillingStatusBadge({ isPaid, isInvoiced }: { isPaid: boolean | null; isInvoiced: boolean | null }) {
   if (isPaid === true) {
-    return <Badge className="bg-status-paid text-xs text-white/90 hover:bg-status-paid">Paid</Badge>
+    return <Badge variant="paid">Paid</Badge>
   }
   if (isInvoiced === true) {
-    return <Badge className="bg-status-invoiced text-xs text-black/60 hover:bg-status-invoiced">Invoiced</Badge>
+    return <Badge variant="invoiced">Invoiced</Badge>
   }
   if (isPaid === false) {
-    return <Badge className="bg-status-not-paid text-xs text-black/60 hover:bg-status-not-paid">Not paid</Badge>
+    return <Badge variant="not-paid">Not paid</Badge>
   }
   return <span className="text-muted-foreground">&mdash;</span>
 }
@@ -344,6 +349,7 @@ function PreviewStep({
   entries,
   fileName,
   onBack,
+  onCancel,
   onNext,
 }: {
   csvData: ParsedCSV
@@ -351,6 +357,7 @@ function PreviewStep({
   entries: ParsedTimeEntry[]
   fileName: string
   onBack: () => void
+  onCancel: () => void
   onNext: () => void
 }) {
   const previewEntries = entries.slice(0, 5)
@@ -370,7 +377,8 @@ function PreviewStep({
   }
 
   return (
-    <div className="space-y-4">
+    <>
+    <DialogBody className="space-y-4">
       {/* Billing tag notice — above the table */}
       {hasBillingTags && (
         <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-sm">
@@ -435,8 +443,12 @@ function PreviewStep({
         )}
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center justify-between pt-2">
+    </DialogBody>
+    <DialogFooter className="sm:justify-between">
+      <Button variant="outline" onClick={onCancel}>
+        Cancel
+      </Button>
+      <div className="flex items-center gap-2">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -446,7 +458,8 @@ function PreviewStep({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
-    </div>
+    </DialogFooter>
+    </>
   )
 }
 
@@ -566,10 +579,12 @@ function ComboboxCell({
   const [search, setSearch] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isPreFilled = useRef(false)
 
   useEffect(() => { setSearch(value) }, [value])
   useEffect(() => {
     if (isOpen) {
+      isPreFilled.current = true
       inputRef.current?.focus()
       inputRef.current?.select()
     }
@@ -587,9 +602,11 @@ function ComboboxCell({
     return () => document.removeEventListener('mousedown', handler)
   })
 
-  const filtered = options.filter((o) =>
-    o.label.toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = search && !isPreFilled.current
+    ? options.filter((o) =>
+        o.label.toLowerCase().includes(search.toLowerCase()),
+      )
+    : options
   const exactMatch = options.find((o) => o.label.toLowerCase() === search.trim().toLowerCase())
 
   const commitAndClose = () => {
@@ -614,7 +631,7 @@ function ComboboxCell({
           <Input
             ref={inputRef}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { isPreFilled.current = false; setSearch(e.target.value) }}
             onKeyDown={(e) => {
               if (e.key === 'Escape') { setSearch(value); setIsOpen(false) }
               if (e.key === 'Enter') {
@@ -660,7 +677,7 @@ function ComboboxCell({
             selectedId === null ? (
               <span className="flex items-center gap-1.5">
                 <span className="text-sm">{value}</span>
-                <Badge className="bg-[#f989e4] text-xs text-white/90 hover:bg-[#f989e4]">New</Badge>
+                <NewIndicator />
               </span>
             ) : <span className="text-sm">{value}</span>
           ) : <span className="text-muted-foreground">{placeholder}</span>}
@@ -679,6 +696,7 @@ function MappingStep({
   mappings,
   setMappings,
   onBack,
+  onCancel,
   onNext,
   onUpdateSummaries,
 }: {
@@ -686,6 +704,7 @@ function MappingStep({
   mappings: MappingRowState[]
   setMappings: React.Dispatch<React.SetStateAction<MappingRowState[]>>
   onBack: () => void
+  onCancel: () => void
   onNext: () => void
   onUpdateSummaries: (summaries: ProjectSummary[]) => void
 }) {
@@ -797,8 +816,9 @@ function MappingStep({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <p className="shrink-0 text-sm text-muted-foreground">
+    <>
+    <DialogBody className="space-y-4">
+      <p className="text-sm text-muted-foreground">
         Review the detected projects. Select existing clients and projects from the dropdown, or type a new name to create them.
       </p>
       {/* Grouped table */}
@@ -816,6 +836,7 @@ function MappingStep({
           <TableBody>
             {groups.map(([origClient, indices]) => {
               const firstRow = mappings[indices[0]]
+              const isSingle = indices.length === 1
               const isExpanded = expandedClients.has(origClient)
               const totalMinutes = indices.reduce((sum, i) => sum + summaries[i].totalMinutes, 0)
               const isGroupModified = indices.some((i) => {
@@ -828,11 +849,92 @@ function MappingStep({
                 )
               })
 
+              // Single project — inline row with client + project + rate
+              if (isSingle) {
+                const i = indices[0]
+                const row = mappings[i]
+                const summary = summaries[i]
+                const isRowModified =
+                  row.clientName !== row.originalClientName ||
+                  row.clientId !== null ||
+                  row.projectName !== row.originalProjectName ||
+                  row.projectId !== null
+
+                return (
+                  <TableRow key={origClient}>
+                    <TableCell>
+                      <div className="flex items-center gap-2 pl-8">
+                        <ComboboxCell
+                          value={row.clientName}
+                          selectedId={row.clientId}
+                          options={clientOptions}
+                          onChange={(name, id) => updateClientForGroup(origClient, name, id)}
+                          placeholder="Select or type client"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <ComboboxCell
+                        value={row.projectName}
+                        selectedId={row.projectId}
+                        options={projectOptions}
+                        onChange={(name, id) => {
+                          const patch: Partial<MappingRowState> = {
+                            projectName: name,
+                            projectId: id,
+                          }
+                          if (id) {
+                            const p = projects.find((pr) => pr.id === id)
+                            if (p) {
+                              patch.hourlyRate = p.hourly_rate ?? row.hourlyRate
+                              if (p.client) {
+                                patch.clientName = p.client.name
+                                patch.clientId = p.client.id ?? null
+                              }
+                            }
+                          }
+                          updateRow(i, patch)
+                        }}
+                        placeholder="Select or type project"
+                      />
+                    </TableCell>
+                    <TableCell className="w-[120px]">
+                      <EditableCell
+                        value={row.hourlyRate != null ? String(row.hourlyRate) : ''}
+                        onChange={(v) => {
+                          const num = parseFloat(v)
+                          updateRow(i, { hourlyRate: isNaN(num) ? null : num })
+                        }}
+                        placeholder="Set rate"
+                        type="number"
+                        bordered
+                      />
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {formatHours(summary.totalMinutes)}
+                    </TableCell>
+                    <TableCell className="w-10 px-1">
+                      {isRowModified && (
+                        <button
+                          type="button"
+                          title="Revert to original"
+                          onClick={() => revertGroup(indices)}
+                          className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              }
+
+              // Multiple projects — expandable group
               return (
                 <React.Fragment key={origClient}>
                   {/* Client group header */}
                   <TableRow
-                    className="bg-muted/20 cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => toggleExpanded(origClient)}
                   >
                     <TableCell>
@@ -844,19 +946,34 @@ function MappingStep({
                         </div>
                         <div onClick={(e) => e.stopPropagation()}>
                           <ComboboxCell
-                          value={firstRow.clientName}
-                          selectedId={firstRow.clientId}
-                          options={clientOptions}
-                          onChange={(name, id) => updateClientForGroup(origClient, name, id)}
-                          placeholder="Select or type client"
-                        />
+                            value={firstRow.clientName}
+                            selectedId={firstRow.clientId}
+                            options={clientOptions}
+                            onChange={(name, id) => updateClientForGroup(origClient, name, id)}
+                            placeholder="Select or type client"
+                          />
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground pl-4">
-                      {indices.length} project{indices.length > 1 ? 's' : ''}
+                      {indices.length} projects
                     </TableCell>
-                    <TableCell />
+                    <TableCell className="w-[120px]" onClick={(e) => e.stopPropagation()}>
+                      <EditableCell
+                        value=""
+                        onChange={(v) => {
+                          const num = parseFloat(v)
+                          if (!isNaN(num)) {
+                            for (const i of indices) {
+                              updateRow(i, { hourlyRate: num })
+                            }
+                          }
+                        }}
+                        placeholder="Set rate"
+                        type="number"
+                        bordered
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-sm">
                       {formatHours(totalMinutes)}
                     </TableCell>
@@ -953,8 +1070,12 @@ function MappingStep({
         </Table>
       </div>
 
-      {/* Footer */}
-      <div className="flex shrink-0 items-center justify-between">
+    </DialogBody>
+    <DialogFooter className="sm:justify-between">
+      <Button variant="outline" onClick={onCancel}>
+        Cancel
+      </Button>
+      <div className="flex items-center gap-2">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -964,7 +1085,8 @@ function MappingStep({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
-    </div>
+    </DialogFooter>
+    </>
   )
 }
 
@@ -981,12 +1103,14 @@ function ImportStepContent({
   summaries,
   mappings,
   onBack,
+  onCancel,
   onComplete,
 }: {
   entries: ParsedTimeEntry[]
   summaries: ProjectSummary[]
   mappings: MappingRowState[]
   onBack: () => void
+  onCancel: () => void
   onComplete?: () => void
 }) {
   const { user } = useAuth()
@@ -1119,8 +1243,31 @@ function ImportStepContent({
     return `${h}h ${m}m`
   }
 
+  // Group summaries by client name
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
+
+  const clientGroups = React.useMemo(() => {
+    const groups = new Map<string, number[]>()
+    for (let i = 0; i < mappings.length; i++) {
+      const clientKey = mappings[i].clientName || '\u2014'
+      if (!groups.has(clientKey)) groups.set(clientKey, [])
+      groups.get(clientKey)!.push(i)
+    }
+    return Array.from(groups.entries())
+  }, [mappings])
+
+  const toggleExpanded = (clientKey: string) => {
+    setExpandedClients((prev) => {
+      const next = new Set(prev)
+      if (next.has(clientKey)) next.delete(clientKey)
+      else next.add(clientKey)
+      return next
+    })
+  }
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5">
+    <>
+    <DialogBody className="space-y-5 pt-1">
       {/* KPI cards — match Reports page style */}
       <div className="grid shrink-0 grid-cols-3 gap-4">
         <Card>
@@ -1149,7 +1296,7 @@ function ImportStepContent({
         </Card>
       </div>
 
-      {/* Project breakdown table */}
+      {/* Project breakdown table — grouped by client */}
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
         <Table>
           <TableHeader className="sticky top-0 z-10">
@@ -1162,46 +1309,84 @@ function ImportStepContent({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {summaries.map((s, i) => {
-              const mapping = mappings[i]
-              const isNewClient = mapping.clientId === null
-              const isNewProject = mapping.projectId === null
+            {clientGroups.map(([clientKey, indices]) => {
+              const firstMapping = mappings[indices[0]]
+              const isNewClient = firstMapping.clientId === null
+              const isExpanded = expandedClients.has(clientKey)
+              const totalMinutes = indices.reduce((sum, i) => sum + summaries[i].totalMinutes, 0)
+              const totalEntryCount = indices.reduce((sum, i) => sum + summaries[i].entryCount, 0)
+
               return (
-                <TableRow key={i}>
-                  <TableCell className="text-sm">
-                    {mapping.clientName ? (
-                      isNewClient ? (
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-sm">{mapping.clientName}</span>
-                          <Badge className="bg-[#f989e4] text-xs text-white/90 hover:bg-[#f989e4]">New</Badge>
+                <React.Fragment key={clientKey}>
+                  {/* Client group header */}
+                  <TableRow
+                    className="bg-muted/20 cursor-pointer"
+                    onClick={() => toggleExpanded(clientKey)}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+                          <ChevronRight
+                            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">
+                          {firstMapping.clientName || '\u2014'}
                         </span>
-                      ) : (
-                        mapping.clientName
+                        {isNewClient && firstMapping.clientName && (
+                          <NewIndicator />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {indices.length} project{indices.length > 1 ? 's' : ''}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{totalEntryCount}</TableCell>
+                    <TableCell className="font-mono text-sm">{formatHours(totalMinutes)}</TableCell>
+                    <TableCell />
+                  </TableRow>
+
+                  {/* Project rows under this client */}
+                  {isExpanded &&
+                    indices.map((i) => {
+                      const mapping = mappings[i]
+                      const s = summaries[i]
+                      const isNewProject = mapping.projectId === null
+
+                      return (
+                        <TableRow key={i}>
+                          <TableCell />
+                          <TableCell className="text-sm">
+                            {isNewProject ? (
+                              <span className="flex items-center gap-1.5">
+                                <span>{mapping.projectName || 'Unnamed project'}</span>
+                                <NewIndicator />
+                              </span>
+                            ) : (
+                              mapping.projectName || 'Unnamed project'
+                            )}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{s.entryCount}</TableCell>
+                          <TableCell className="font-mono text-sm">{formatHours(s.totalMinutes)}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {mapping.hourlyRate != null ? mapping.hourlyRate : <span className="text-muted-foreground">&mdash;</span>}
+                          </TableCell>
+                        </TableRow>
                       )
-                    ) : '\u2014'}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {isNewProject ? (
-                      <span className="flex items-center gap-1.5">
-                        <span className="text-sm">{mapping.projectName || 'Unnamed project'}</span>
-                        <Badge className="bg-[#f989e4] text-xs text-white/90 hover:bg-[#f989e4]">New</Badge>
-                      </span>
-                    ) : (
-                      mapping.projectName || 'Unnamed project'
-                    )}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">{s.entryCount}</TableCell>
-                  <TableCell className="font-mono text-sm">{formatHours(s.totalMinutes)}</TableCell>
-                  <TableCell className="font-mono text-sm">{mapping.hourlyRate != null ? mapping.hourlyRate : <span className="text-muted-foreground">&mdash;</span>}</TableCell>
-                </TableRow>
+                    })}
+                </React.Fragment>
               )
             })}
           </TableBody>
         </Table>
       </div>
 
-      {/* Footer */}
-      <div className="flex shrink-0 items-center justify-between">
+    </DialogBody>
+    <DialogFooter className="sm:justify-between">
+      <Button variant="outline" onClick={onCancel} disabled={isImporting}>
+        Cancel
+      </Button>
+      <div className="flex items-center gap-2">
         <Button variant="outline" onClick={onBack} disabled={isImporting}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -1220,7 +1405,8 @@ function ImportStepContent({
           )}
         </Button>
       </div>
-    </div>
+    </DialogFooter>
+    </>
   )
 }
 
@@ -1231,10 +1417,20 @@ function ImportStepContent({
 export interface ImportWizardProps {
   /** Called when import completes successfully */
   onComplete?: () => void
+  /** Called when user cancels the wizard */
+  onCancel?: () => void
+  /** Hide the built-in header (title + step indicator) — used when embedded in another wizard */
+  hideHeader?: boolean
+  /** Called when the internal step changes — used by parent to sync its own stepper */
+  onStepChange?: (step: WizardStep) => void
 }
 
-export function ImportWizard({ onComplete }: ImportWizardProps) {
-  const [step, setStep] = useState<WizardStep>('upload')
+export function ImportWizard({ onComplete, onCancel, hideHeader, onStepChange }: ImportWizardProps) {
+  const [step, _setStep] = useState<WizardStep>('upload')
+  const setStep = useCallback((s: WizardStep) => {
+    _setStep(s)
+    onStepChange?.(s)
+  }, [onStepChange])
   const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
@@ -1292,15 +1488,17 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
   )
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
-      {/* Header */}
-      <div className="shrink-0 pr-6">
-        <h2 className="font-serif text-xl font-normal">Import CSV</h2>
-      </div>
-      {/* Step indicator — centered, with breathing room */}
-      <div className="flex shrink-0 justify-center pb-1">
-        <StepIndicator currentStep={step} completedSteps={completedSteps} />
-      </div>
+    <>
+      {!hideHeader && (
+        <DialogHeader>
+          <DialogTitle>Import CSV</DialogTitle>
+          <StepIndicator
+            currentStep={step}
+            completedSteps={completedSteps}
+            onStepClick={(s) => setStep(s)}
+          />
+        </DialogHeader>
+      )}
 
       {step === 'upload' && (
         <UploadStep
@@ -1316,6 +1514,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
           entries={entries}
           fileName={fileName}
           onBack={() => setStep('upload')}
+          onCancel={() => onCancel?.()}
           onNext={() => {
             setCompletedSteps((prev) => new Set([...prev, 'preview']))
             setStep('mapping')
@@ -1328,6 +1527,7 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
           mappings={mappings}
           setMappings={setMappings}
           onBack={() => setStep('preview')}
+          onCancel={() => onCancel?.()}
           onNext={() => {
             setCompletedSteps((prev) => new Set([...prev, 'mapping']))
             setStep('import')
@@ -1341,9 +1541,10 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
           summaries={summaries}
           mappings={mappings}
           onBack={() => setStep('mapping')}
+          onCancel={() => onCancel?.()}
           onComplete={onComplete}
         />
       )}
-    </div>
+    </>
   )
 }

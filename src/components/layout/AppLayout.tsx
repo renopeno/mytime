@@ -14,7 +14,7 @@ function MobileHeader() {
     <header className="flex items-center justify-between bg-sidebar px-4 py-3 md:hidden">
       <div className="flex items-center gap-2">
         <span className="font-serif text-xl font-normal tracking-tight leading-none">MyTime</span>
-        <Badge variant="secondary" className="text-[10px] tracking-wider">
+        <Badge variant="secondary">
           Free
         </Badge>
       </div>
@@ -35,6 +35,14 @@ export function AppLayout() {
   const { settings, loading: settingsLoading, updateSettings } = useSettings()
   const showWizard = !settingsLoading && settings?.onboarding_completed === false
 
+  if (showWizard) {
+    return (
+      <OnboardingWizard
+        onComplete={() => updateSettings({ onboarding_completed: true })}
+      />
+    )
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar companyName={settings?.company_name} />
@@ -44,11 +52,6 @@ export function AppLayout() {
           <Outlet />
         </div>
       </SidebarInset>
-      {showWizard && (
-        <OnboardingWizard
-          onComplete={() => updateSettings({ onboarding_completed: true })}
-        />
-      )}
     </SidebarProvider>
   )
 }
