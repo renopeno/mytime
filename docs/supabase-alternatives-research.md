@@ -146,3 +146,25 @@ Isto kao Opcija 1, ali s Auth.js umjesto Clerka:
 | `src/pages/LoginPage.tsx` | Clerk komponente |
 | `package.json` | Dodati `@clerk/clerk-react`, `hono`, maknuti `@supabase/supabase-js` |
 | `api/` (novo) | Vercel serverless API routes |
+
+---
+
+## Odluka: Ostajemo na Supabase + cron keep-alive
+
+### Zašto ne migrirati?
+
+Nakon analize budućih potreba projekta (logo upload za fakture, email slanje, realtime timer, team features), Supabase sve to već ima uključeno (Storage, Edge Functions, Realtime). Svaki novi feature s Neon stackom zahtijeva dodavanje novih servisa.
+
+### Implementirano rješenje
+
+GitHub Actions cron job (`.github/workflows/supabase-keep-alive.yml`) koji 2x tjedno šalje request na Supabase bazu i drži projekt aktivnim.
+
+### Setup (jednom)
+
+Dodaj ova dva GitHub repository secrets (Settings → Secrets → Actions):
+- `SUPABASE_URL` — tvoj Supabase project URL
+- `SUPABASE_ANON_KEY` — tvoj Supabase anon key
+
+### Backup plan
+
+Ako Supabase promijeni politiku i cron prestane raditi → migracija na Neon + Clerk (dokumentirano gore).

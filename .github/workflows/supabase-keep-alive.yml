@@ -1,0 +1,29 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Runs every Monday and Thursday at 9:00 UTC
+    - cron: '0 9 * * 1,4'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase database
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/get_project_logged_minutes" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"p_user_id": "00000000-0000-0000-0000-000000000000"}')
+
+          echo "Response status: $response"
+
+          if [ "$response" -ge 200 ] && [ "$response" -lt 500 ]; then
+            echo "Supabase is alive!"
+          else
+            echo "Failed to reach Supabase (HTTP $response)"
+            exit 1
+          fi
