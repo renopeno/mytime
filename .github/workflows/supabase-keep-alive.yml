@@ -2,28 +2,94 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # Runs every Monday and Thursday at 9:00 UTC
-    - cron: '0 9 * * 1,4'
+    # Every day at 07:30 UTC
+    - cron: '30 7 * * *'
   workflow_dispatch: # Allow manual trigger
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase database
+      # Random delay 0-300s so it doesn't always fire at the exact same second
+      - name: Random sleep
+        run: sleep $((RANDOM % 300))
+
+      - name: INSERT random row
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/get_project_logged_minutes" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+          WORD=$(shuf -n1 /usr/share/dict/words | tr -d "'" | head -c 20)
+          NUM=$((RANDOM % 10000))
+          PAYLOAD="{\"word\":\"${WORD}\",\"n\":${NUM},\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+          response=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/_keep_alive" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
             -H "Content-Type: application/json" \
-            -d '{"p_user_id": "00000000-0000-0000-0000-000000000000"}')
+            -H "Prefer: return=representation" \
+            -d "{\"payload\":${PAYLOAD}, \"note\":\"heartbeat-${WORD}-${NUM}\"}")
 
-          echo "Response status: $response"
+          HTTP_CODE=$(echo "$response" | tail -1)
+          BODY=$(echo "$response" | sed '$d')
+          echo "INSERT status: ${HTTP_CODE}"
+          echo "Body: ${BODY}"
 
-          if [ "$response" -ge 200 ] && [ "$response" -lt 500 ]; then
-            echo "Supabase is alive!"
-          else
-            echo "Failed to reach Supabase (HTTP $response)"
-            exit 1
+          # Extract the id for later steps
+          ID=$(echo "$BODY" | python3 -c "import sys,json; print(json.loads(sys.stdin.read())[0]['id'])")
+          echo "ROW_ID=${ID}" >> "$GITHUB_ENV"
+
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+      - name: SELECT and verify
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/_keep_alive?id=eq.${ROW_ID}&select=*" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+
+          HTTP_CODE=$(echo "$response" | tail -1)
+          BODY=$(echo "$response" | sed '$d')
+          echo "SELECT status: ${HTTP_CODE}"
+          echo "Row: ${BODY}"
+          [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || exit 1
+
+      - name: UPDATE the row
+        run: |
+          NEW_NOTE="updated-$(date -u +%H%M%S)-$((RANDOM % 9999))"
+
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/_keep_alive?id=eq.${ROW_ID}" \
+            -X PATCH \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"note\":\"${NEW_NOTE}\",\"updated_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+
+          echo "UPDATE status: ${response}"
+          [ "$response" -ge 200 ] && [ "$response" -lt 300 ] || exit 1
+
+      - name: DELETE old rows (keep last 3)
+        run: |
+          # Get IDs of rows to keep (3 newest)
+          KEEP=$(curl -s \
+            "${SUPABASE_URL}/rest/v1/_keep_alive?select=id&order=created_at.desc&limit=3" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+
+          KEEP_IDS=$(echo "$KEEP" | python3 -c "import sys,json; print(','.join(r['id'] for r in json.loads(sys.stdin.read())))")
+          echo "Keeping: ${KEEP_IDS}"
+
+          if [ -n "$KEEP_IDS" ]; then
+            response=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${SUPABASE_URL}/rest/v1/_keep_alive?id=not.in.(${KEEP_IDS})" \
+              -X DELETE \
+              -H "apikey: ${SUPABASE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_KEY}")
+
+            echo "DELETE status: ${response}"
           fi
+
+          echo "Keep-alive CRUD cycle complete!"
